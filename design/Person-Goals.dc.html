@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Alex Rivera: goals</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 900px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="3">
+        <a href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <span>{{item.label}}</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">
+      <div style="margin-bottom: 6px">morgan.ellis@sil.org</div>
+      <a href="#" style="font-size: 13px">Sign out</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="max-width: 860px">
+      <p style="margin: 0 0 8px; font-size: 14px; color: #4b5563"><a href="Team-Dashboard.dc.html">My team</a> / Alex Rivera</p>
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+        <div>
+          <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">Alex Rivera: goals</h1>
+          <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">Read-only. Alex updates these; you see every check-in.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <label for="fy" style="font-size: 13px; font-weight: 600; color: #4b5563">Fiscal year</label>
+          <select id="fy" value="{{fyValue}}" onChange="{{setFy}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+            <option value="2027">FY2027 (current)</option>
+            <option value="2026">FY2026</option>
+            <option value="2025">FY2025</option>
+            <option value="all">All years</option>
+          </select>
+        </div>
+      </div>
+
+      <div role="group" aria-label="Filter goals by status" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+          <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="background: {{f.bg}}; color: {{f.fg}}; border: 1px solid {{f.border}}; border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">{{f.label}}</button>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px">
+        <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #ffffff; border: 1px dashed #9ca3af; border-radius: 12px; padding: 24px 20px; color: #4b5563; font-size: 15px">No goals match this filter.</div>
+        </sc-if>
+        <sc-for list="{{goals}}" as="goal" hint-placeholder-count="3">
+          <div style="background: {{goal.cardBg}}; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start">
+              <div style="min-width: 0">
+                <div style="font-weight: 600; font-size: 17px; color: {{goal.titleColor}}">{{goal.title}}</div>
+                <div style="color: #4b5563; font-size: 14px">{{goal.measure}} &middot; {{goal.fyLabel}}</div>
+              </div>
+              <span style="background: {{goal.chipBg}}; color: {{goal.chipFg}}; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap">{{goal.chipText}}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <div role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{goal.pct}}" style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden">
+                <div style="width: {{goal.barWidth}}; height: 100%; background: {{goal.barColor}}"></div>
+              </div>
+              <span style="font-size: 14px; font-weight: 600; width: 44px; text-align: right">{{goal.pctText}}</span>
+            </div>
+            <sc-if value="{{goal.isCancelled}}" hint-placeholder-val="{{ false }}">
+              <div style="border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 14px; color: #4b5563">
+                <span style="font-weight: 600">Cancelled {{goal.cancelledOn}}.</span> {{goal.reason}}
+              </div>
+            </sc-if>
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 10px; display: flex; flex-direction: column; gap: 8px">
+              <div style="font-size: 13px; font-weight: 600; color: #4b5563">Check-in history</div>
+              <sc-for list="{{goal.history}}" as="h" hint-placeholder-count="3">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px">
+                  <span style="width: 56px; font-weight: 600">{{h.month}}</span>
+                  <span style="width: 40px">{{h.pct}}%</span>
+                  <span style="width: 80px; color: #4b5563">{{h.status}}</span>
+                  <span style="flex: 1 1 260px; min-width: 0">{{h.note}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const icons = {
+      goals: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      reviews: 'M9 3h6v3H9z M7 5H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2 M8 12h8 M8 16h5',
+      team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'
+    };
+    const mk = (label, href, icon, active) => ({
+      label, href, icon,
+      color: active ? '#005CB9' : '#4b5563',
+      bg: active ? 'rgba(0,92,185,0.08)' : 'transparent',
+      border: active ? '#005CB9' : 'transparent',
+      weight: active ? '600' : '400'
+    });
+    const chips = {
+      on: ['On track', '#e3f1db', '#2d5a17', '#3f7f24'],
+      risk: ['At risk', '#fff0c2', '#6b4a00', '#c98a00'],
+      off: ['Off track', '#fbdadb', '#8f1519', '#c62a30']
+    };
+    const h = (month, pct, status, note) => ({ month, pct, status, note });
+    const g = (fy, title, measure, pct, st, status, history, extra) => Object.assign({ fy, title, measure, pct, st, status, history }, extra || {});
+    const all = [
+      g(2027, 'Launch the new onboarding checklist', 'Checklist live for all new staff', 70, 'on', 'active', [
+        h('Oct', 70, 'On track', 'Pilot group finished; two teams asked to join.'),
+        h('Sep', 45, 'On track', 'Checklist drafted and reviewed with HR.'),
+        h('Aug', 20, 'On track', 'Interviewed five recent hires.')
+      ]),
+      g(2027, 'Cut average ticket response time', 'Under 4 business hours by June', 45, 'risk', 'active', [
+        h('Oct', 45, 'At risk', 'Two vacancies slowed the queue; hiring starts next week.'),
+        h('Sep', 40, 'On track', 'New triage rota in place.'),
+        h('Aug', 25, 'On track', 'Baseline measured at 9 hours.')
+      ]),
+      g(2027, 'Complete the leadership course', '6 of 8 modules', 75, 'on', 'active', [
+        h('Oct', 75, 'On track', 'Modules 5 and 6 done.'),
+        h('Sep', 50, 'On track', 'Module 4 done.')
+      ]),
+      g(2027, 'Finish the project management certificate', 'Exam passed', 100, 'on', 'completed', [
+        h('Oct', 100, 'Done', 'Passed the exam.'),
+        h('Sep', 80, 'On track', 'Practice exams are going well.')
+      ]),
+      g(2027, 'Migrate the team wiki', 'All pages moved by December', 10, 'off', 'cancelled', [
+        h('Aug', 10, 'Off track', 'Inventory of pages started.')
+      ], { cancelledOn: 'Oct 14', reason: 'The wiki was replaced by the organization-wide knowledge base.' }),
+      g(2026, 'Roll out two-factor sign-in to the team', 'Every teammate enrolled', 100, 'on', 'completed', [
+        h('May', 100, 'Done', 'Last two teammates enrolled.'),
+        h('Apr', 85, 'On track', 'Waiting on two new phones.')
+      ]),
+      g(2026, 'Learn the new ticketing system', 'Certified by March', 30, 'risk', 'cancelled', [
+        h('Jan', 30, 'At risk', 'Training dates keep moving.')
+      ], { cancelledOn: 'Feb 9', reason: 'The ticketing system rollout was postponed.' }),
+      g(2025, 'Cross-train on Google Workspace admin', 'Handle tier-2 requests alone', 100, 'on', 'completed', [
+        h('Jun', 100, 'Done', 'Handled all tier-2 requests this month.')
+      ])
+    ];
+
+    const s = this.state || {};
+    const fy = s.fy || '2027';
+    const filter = s.filter || 'active';
+    const inYear = all.filter((x) => fy === 'all' || String(x.fy) === fy);
+    const count = (key) => inYear.filter((x) => key === 'all' || x.status === key).length;
+    const shown = inYear.filter((x) => filter === 'all' || x.status === filter);
+    const defs = [['active', 'Active'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['all', 'All']];
+
+    return {
+      nav: [
+        mk('My goals', 'Main.dc.html', icons.goals, false),
+        mk('My reviews', 'Review-Draft.dc.html', icons.reviews, false),
+        mk('My team', 'Team-Dashboard.dc.html', icons.team, true)
+      ],
+      fyValue: fy,
+      setFy: (e) => this.setState({ fy: e.target.value }),
+      filters: defs.map(([key, label]) => ({
+        label: label + ' (' + count(key) + ')',
+        pressed: filter === key,
+        bg: filter === key ? '#005CB9' : '#ffffff',
+        fg: filter === key ? '#ffffff' : '#374151',
+        border: filter === key ? '#005CB9' : '#9ca3af',
+        pick: () => this.setState({ filter: key })
+      })),
+      empty: shown.length === 0,
+      goals: shown.map((x) => {
+        const cancelled = x.status === 'cancelled';
+        const completed = x.status === 'completed';
+        const c = chips[x.st];
+        return {
+          title: x.title, measure: x.measure, pct: x.pct, history: x.history,
+          fyLabel: 'FY' + x.fy,
+          pctText: x.pct + '%', barWidth: x.pct + '%',
+          chipText: cancelled ? 'Cancelled' : (completed ? 'Completed' : c[0]),
+          chipBg: cancelled ? '#e5e7eb' : (completed ? '#e3f1db' : c[1]),
+          chipFg: cancelled ? '#374151' : (completed ? '#2d5a17' : c[2]),
+          barColor: cancelled ? '#9ca3af' : c[3],
+          cardBg: cancelled ? '#f3f4f6' : '#ffffff',
+          titleColor: cancelled ? '#4b5563' : '#1f2937',
+          isCancelled: cancelled, cancelledOn: x.cancelledOn, reason: x.reason
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

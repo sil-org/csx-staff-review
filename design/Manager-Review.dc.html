@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review of Alex Rivera</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 1000px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="3">
+        <a href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <span>{{item.label}}</span>
+          <sc-if value="{{item.badge}}" hint-placeholder-val="{{ false }}">
+            <span style="margin-left: auto; background: #005CB9; color: #ffffff; border-radius: 999px; font-size: 12px; font-weight: 600; padding: 1px 8px">{{item.badge}}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">
+      <div style="margin-bottom: 6px">morgan.ellis@sil.org</div>
+      <a href="#" style="font-size: 13px">Sign out</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <p style="margin: 0 0 8px; font-size: 14px; color: #4b5563"><a href="Team-Dashboard.dc.html">My team</a> / Alex Rivera</p>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+      <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">Q1 2026 review: Alex Rivera</h1>
+      <span style="background: #dce9f8; color: #034D8A; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px">With you</span>
+    </div>
+    <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">Submitted April 2. Alex&rsquo;s answers are final. Alex can&rsquo;t see your comments until you send this for sign-off.</p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; align-items: flex-start">
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 0 4px; font-size: 13px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 0.04em">
+          <span style="flex: 1 1 240px">Alex&rsquo;s answer (read-only)</span>
+          <span style="flex: 1 1 240px">Your response</span>
+        </div>
+
+        <section aria-labelledby="mq1" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 id="mq1" style="margin: 0; font-size: 16px">1. What went well this quarter?</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 16px">
+            <div style="flex: 1 1 240px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px; line-height: 1.5; box-sizing: border-box">We shipped the onboarding checklist to the pilot group (12 new hires). Setup time dropped from three days to one, and two other teams have asked to join early.</div>
+            <div style="flex: 1 1 240px; display: flex; flex-direction: column">
+              <label for="c1" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Your comment on question 1</label>
+              <textarea id="c1" rows="5" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: vertical; box-sizing: border-box; flex: 1">Strong result. Let&rsquo;s use the pilot numbers in the Q2 plan.</textarea>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="mq2" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 id="mq2" style="margin: 0; font-size: 16px">2. Overall self-rating</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 16px">
+            <div style="flex: 1 1 240px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px; box-sizing: border-box">Meets expectations</div>
+            <div style="flex: 1 1 240px; display: flex; flex-direction: column">
+              <label for="c2" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Your response to question 2</label>
+              <select id="c2" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit; box-sizing: border-box">
+                <option>Choose one</option>
+                <option>Exceeds expectations</option>
+                <option selected>Meets expectations</option>
+                <option>Below expectations</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="mq3" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 id="mq3" style="margin: 0; font-size: 16px">3. Anything else you want your manager to know?</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 16px">
+            <div style="flex: 1 1 240px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px; color: #4b5563; font-style: italic; box-sizing: border-box">No answer (optional question)</div>
+            <div style="flex: 1 1 240px; display: flex; flex-direction: column">
+              <label for="c3" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Your response to question 3</label>
+              <input id="c3" type="text" placeholder="A sentence or two" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; box-sizing: border-box; font-family: inherit">
+            </div>
+          </div>
+        </section>
+
+        <section style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 6px">
+          <label for="overall" style="font-size: 16px; font-weight: 600">Overall comment <span style="font-weight: 400; color: #4b5563; font-size: 14px">(optional)</span></label>
+          <textarea id="overall" rows="3" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: vertical; box-sizing: border-box; width: 100%"></textarea>
+        </section>
+
+        <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end">
+            <button type="button" style="background: #005CB9; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Send to Alex for sign-off</button>
+          </div>
+        </div>
+      </div>
+
+      <aside aria-label="Alex's goals" style="flex: 1 1 260px; max-width: 340px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-sizing: border-box">
+        <h2 style="margin: 0 0 4px; font-size: 17px">Alex&rsquo;s goals</h2>
+        <p style="margin: 0 0 12px; font-size: 13px; color: #4b5563">Latest check-ins, for context.</p>
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <sc-for list="{{goals}}" as="goal" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <div style="font-size: 15px; font-weight: 600">{{goal.title}}</div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="background: {{goal.chipBg}}; color: {{goal.chipFg}}; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 8px">{{goal.chipText}}</span>
+                <span style="font-size: 13px; color: #4b5563">{{goal.pctText}} complete</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const icons = {
+      goals: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      reviews: 'M9 3h6v3H9z M7 5H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2 M8 12h8 M8 16h5',
+      team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'
+    };
+    const mk = (label, href, icon, active, badge) => ({
+      label, href, icon, badge,
+      color: active ? '#005CB9' : '#4b5563',
+      bg: active ? 'rgba(0,92,185,0.08)' : 'transparent',
+      border: active ? '#005CB9' : 'transparent',
+      weight: active ? '600' : '400'
+    });
+    const chips = {
+      on: ['On track', '#e3f1db', '#2d5a17'],
+      risk: ['At risk', '#fff0c2', '#6b4a00'],
+      off: ['Off track', '#fbdadb', '#8f1519']
+    };
+    const g = (title, pct, st) => ({ title, pctText: pct + '%', chipText: chips[st][0], chipBg: chips[st][1], chipFg: chips[st][2] });
+    return {
+      nav: [
+        mk('My goals', 'Main.dc.html', icons.goals, false, 0),
+        mk('My reviews', 'Review-Draft.dc.html', icons.reviews, false, 0),
+        mk('My team', 'Team-Dashboard.dc.html', icons.team, true, 2)
+      ],
+      goals: [
+        g('Launch the new onboarding checklist', 70, 'on'),
+        g('Cut average ticket response time', 45, 'risk'),
+        g('Complete the leadership course', 75, 'on'),
+        g('Document the backup process', 20, 'off')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

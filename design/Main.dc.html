@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My goals</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 900px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="2">
+        <a href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <span>{{item.label}}</span>
+          <sc-if value="{{item.badge}}" hint-placeholder-val="{{ false }}">
+            <span style="margin-left: auto; background: #005CB9; color: #ffffff; border-radius: 999px; font-size: 12px; font-weight: 600; padding: 1px 8px">{{item.badge}}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">
+      <div style="margin-bottom: 6px">alex.rivera@sil.org</div>
+      <a href="#" style="font-size: 13px">Sign out</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="max-width: 860px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+        <div>
+          <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">My goals</h1>
+          <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">{{subtitle}} &middot; visible to you and your manager</p>
+        </div>
+        <button type="button" style="background: #005CB9; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Add a goal</button>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between">
+        <div role="group" aria-label="Filter goals by status" style="display: flex; flex-wrap: wrap; gap: 8px">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+            <button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="background: {{f.bg}}; color: {{f.fg}}; border: 1px solid {{f.border}}; border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">{{f.label}}</button>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <label for="fy" style="font-size: 13px; font-weight: 600; color: #4b5563">Fiscal year</label>
+          <select id="fy" value="{{fyValue}}" onChange="{{setFy}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+            <option value="2027">FY2027 (current)</option>
+            <option value="2026">FY2026</option>
+            <option value="2025">FY2025</option>
+            <option value="all">All years</option>
+          </select>
+        </div>
+      </div>
+
+      <sc-if value="{{showBanner}}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top: 20px; background: #fff8e5; border: 1px solid #ffb71b; border-radius: 12px; padding: 14px 20px">
+          <div style="font-weight: 600; font-size: 16px; color: #5c3f00">November check-in</div>
+          <div style="font-size: 14px; color: #5c3f00">{{bannerText}}</div>
+        </div>
+      </sc-if>
+
+      <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px">
+        <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #ffffff; border: 1px dashed #9ca3af; border-radius: 12px; padding: 24px 20px; color: #4b5563; font-size: 15px">No goals match this filter.</div>
+        </sc-if>
+        <sc-for list="{{goals}}" as="goal" hint-placeholder-count="4">
+          <div style="background: {{goal.cardBg}}; border: 1px solid {{goal.border}}; border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start">
+              <div style="min-width: 0">
+                <div style="font-weight: 600; font-size: 17px; color: {{goal.titleColor}}">{{goal.title}}</div>
+                <div style="color: #4b5563; font-size: 14px">{{goal.measure}} &middot; {{goal.fyLabel}}</div>
+              </div>
+              <span style="background: {{goal.chipBg}}; color: {{goal.chipFg}}; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap">{{goal.chipText}}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <div role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{goal.pct}}" style="flex: 1; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden">
+                <div style="width: {{goal.barWidth}}; height: 100%; background: {{goal.barColor}}"></div>
+              </div>
+              <span style="font-size: 14px; font-weight: 600; width: 44px; text-align: right">{{goal.pctText}}</span>
+            </div>
+
+            <sc-if value="{{goal.isCancelled}}" hint-placeholder-val="{{ false }}">
+              <div style="border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 14px; color: #4b5563">
+                <span style="font-weight: 600">Cancelled {{goal.cancelledOn}}.</span> {{goal.reason}}
+              </div>
+            </sc-if>
+
+            <sc-if value="{{goal.isActive}}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #4b5563">
+                <span>{{goal.updated}}</span>
+                <span style="display: flex; gap: 8px; flex-wrap: wrap">
+                  <button type="button" onClick="{{goal.askCancel}}" style="background: #ffffff; color: #8f1519; border: 1px solid #8f1519; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Cancel goal</button>
+                  <button type="button" onClick="{{goal.toggleOpen}}" style="background: #ffffff; color: #005CB9; border: 1px solid #005CB9; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">{{goal.action}}</button>
+                </span>
+              </div>
+            </sc-if>
+            <sc-if value="{{goal.isCompleted}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 13px; color: #4b5563">{{goal.updated}}</div>
+            </sc-if>
+
+            <sc-if value="{{goal.open}}" hint-placeholder-val="{{ false }}">
+              <form style="border-top: 1px solid #e5e7eb; margin-top: 4px; padding-top: 16px; display: flex; flex-direction: column; gap: 12px">
+                <div style="font-weight: 600; font-size: 16px">November check-in</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px">
+                  <div style="flex: 1 1 140px; display: flex; flex-direction: column; gap: 4px">
+                    <label for="pct" style="font-size: 14px; font-weight: 600">Progress (%)</label>
+                    <input id="pct" type="number" min="0" max="100" value="50" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; box-sizing: border-box; font-family: inherit">
+                  </div>
+                  <div style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 4px">
+                    <label for="status" style="font-size: 14px; font-weight: 600">Status</label>
+                    <select id="status" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+                      <option>On track</option>
+                      <option selected>At risk</option>
+                      <option>Off track</option>
+                      <option>Done</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <label for="note" style="font-size: 14px; font-weight: 600">What happened this month?</label>
+                  <textarea id="note" rows="3" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: vertical; box-sizing: border-box; width: 100%">Two vacancies slowed the queue; hiring starts next week.</textarea>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+                  <button type="button" onClick="{{goal.toggleOpen}}" style="background: #005CB9; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Save check-in</button>
+                  <button type="button" onClick="{{goal.toggleOpen}}" style="background: #ffffff; color: #374151; border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Cancel</button>
+                  <span style="font-size: 13px; color: #4b5563">Your manager can see this check-in.</span>
+                </div>
+              </form>
+            </sc-if>
+
+            <sc-if value="{{goal.cancelling}}" hint-placeholder-val="{{ false }}">
+              <form style="border-top: 1px solid #e5e7eb; margin-top: 4px; padding-top: 16px; display: flex; flex-direction: column; gap: 12px">
+                <div style="font-weight: 600; font-size: 16px">Cancel this goal?</div>
+                <p style="margin: 0; font-size: 14px; color: #4b5563">The goal and its check-ins stay on record and your manager can still see them. You can&rsquo;t add check-ins or reopen it afterward.</p>
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <label for="reason" style="font-size: 14px; font-weight: 600">Why is it being cancelled? <span aria-hidden="true" style="color: #b42318; font-weight: 700">*</span></label>
+                  <textarea id="reason" rows="3" value="{{goal.reasonValue}}" onChange="{{goal.setReason}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: vertical; box-sizing: border-box; width: 100%"></textarea>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+                  <button type="button" disabled="{{goal.cancelDisabled}}" onClick="{{goal.confirmCancel}}" style="background: {{goal.confirmBg}}; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Cancel goal</button>
+                  <button type="button" onClick="{{goal.keep}}" style="background: #ffffff; color: #374151; border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Keep goal</button>
+                </div>
+              </form>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  seed() {
+    const g = (id, fy, title, measure, pct, st, updated, due, status, extra) => Object.assign({ id, fy, title, measure, pct, st, updated, due, status }, extra || {});
+    return [
+      g(1, 2027, 'Launch the new onboarding checklist', 'Checklist live for all new staff', 70, 'on', 'Last check-in Oct 28 · due this month', true, 'active'),
+      g(2, 2027, 'Cut average ticket response time', 'Under 4 business hours by June', 45, 'risk', 'Last check-in Oct 30 · due this month', true, 'active'),
+      g(3, 2027, 'Complete the leadership course', '6 of 8 modules', 75, 'on', 'Last check-in Nov 3', false, 'active'),
+      g(4, 2027, 'Document the backup process', 'Runbook reviewed by a peer', 20, 'off', 'Last check-in Nov 4', false, 'active'),
+      g(5, 2027, 'Finish the project management certificate', 'Exam passed', 100, 'on', 'Completed Oct 3', false, 'completed'),
+      g(6, 2027, 'Migrate the team wiki', 'All pages moved by December', 10, 'off', '', false, 'cancelled', { cancelledOn: 'Oct 14', reason: 'The wiki was replaced by the organization-wide knowledge base.' }),
+      g(7, 2026, 'Roll out two-factor sign-in to the team', 'Every teammate enrolled', 100, 'on', 'Completed May 20', false, 'completed'),
+      g(8, 2026, 'Learn the new ticketing system', 'Certified by March', 30, 'risk', '', false, 'cancelled', { cancelledOn: 'Feb 9', reason: 'The ticketing system rollout was postponed.' }),
+      g(9, 2025, 'Cross-train on Google Workspace admin', 'Handle tier-2 requests alone', 100, 'on', 'Completed Jun 12', false, 'completed')
+    ];
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const goals = s.goals || this.seed();
+    const fy = s.fy || '2027';
+    const filter = s.filter || 'active';
+    const openId = s.openId === undefined ? 2 : s.openId;
+    const cancelId = s.cancelId || null;
+    const reason = s.reason || '';
+
+    const icons = {
+      goals: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      reviews: 'M9 3h6v3H9z M7 5H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2 M8 12h8 M8 16h5'
+    };
+    const mk = (label, href, icon, active, badge) => ({
+      label, href, icon, badge,
+      color: active ? '#005CB9' : '#4b5563',
+      bg: active ? 'rgba(0,92,185,0.08)' : 'transparent',
+      border: active ? '#005CB9' : 'transparent',
+      weight: active ? '600' : '400'
+    });
+    const chips = {
+      on: ['On track', '#e3f1db', '#2d5a17', '#3f7f24'],
+      risk: ['At risk', '#fff0c2', '#6b4a00', '#c98a00'],
+      off: ['Off track', '#fbdadb', '#8f1519', '#c62a30']
+    };
+
+    const inYear = goals.filter((x) => fy === 'all' || String(x.fy) === fy);
+    const count = (key) => inYear.filter((x) => key === 'all' || x.status === key).length;
+    const shown = inYear.filter((x) => filter === 'all' || x.status === filter);
+
+    const filterDefs = [['active', 'Active'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['all', 'All']];
+    const filters = filterDefs.map(([key, label]) => ({
+      label: label + ' (' + count(key) + ')',
+      pressed: filter === key,
+      bg: filter === key ? '#005CB9' : '#ffffff',
+      fg: filter === key ? '#ffffff' : '#374151',
+      border: filter === key ? '#005CB9' : '#9ca3af',
+      pick: () => this.setState({ filter: key, openId: null, cancelId: null })
+    }));
+
+    const cards = shown.map((x) => {
+      const active = x.status === 'active';
+      const cancelled = x.status === 'cancelled';
+      const completed = x.status === 'completed';
+      const isOpen = active && openId === x.id;
+      const c = chips[x.st];
+      return {
+        title: x.title, measure: x.measure, pct: x.pct,
+        fyLabel: 'FY' + x.fy,
+        pctText: x.pct + '%', barWidth: x.pct + '%',
+        chipText: cancelled ? 'Cancelled' : (completed ? 'Completed' : c[0]),
+        chipBg: cancelled ? '#e5e7eb' : (completed ? '#e3f1db' : c[1]),
+        chipFg: cancelled ? '#374151' : (completed ? '#2d5a17' : c[2]),
+        barColor: cancelled ? '#9ca3af' : c[3],
+        cardBg: cancelled ? '#f3f4f6' : '#ffffff',
+        titleColor: cancelled ? '#4b5563' : '#1f2937',
+        border: isOpen || cancelId === x.id ? '#005CB9' : (active && x.due ? '#ffb71b' : '#e5e7eb'),
+        isActive: active, isCancelled: cancelled, isCompleted: completed,
+        cancelledOn: x.cancelledOn, reason: x.reason, updated: x.updated,
+        open: isOpen,
+        action: isOpen ? 'Close' : (x.due ? 'Check in' : 'Update'),
+        cancelling: active && cancelId === x.id,
+        reasonValue: reason,
+        setReason: (e) => this.setState({ reason: e.target.value }),
+        cancelDisabled: !reason.trim(),
+        confirmBg: reason.trim() ? '#8f1519' : '#6b7280',
+        toggleOpen: () => this.setState({ openId: isOpen ? null : x.id, cancelId: null }),
+        askCancel: () => this.setState({ cancelId: x.id, openId: null, reason: '' }),
+        keep: () => this.setState({ cancelId: null, reason: '' }),
+        confirmCancel: () => {
+          if (!reason.trim()) return;
+          this.setState({
+            goals: goals.map((y) => y.id === x.id ? Object.assign({}, y, { status: 'cancelled', reason: reason.trim(), cancelledOn: 'Nov 13' }) : y),
+            cancelId: null, reason: ''
+          });
+        }
+      };
+    });
+
+    const due = goals.filter((x) => x.fy === 2027 && x.status === 'active' && x.due).length;
+    const activeNow = goals.filter((x) => x.fy === 2027 && x.status === 'active').length;
+    const showBanner = due > 0 && (fy === '2027' || fy === 'all');
+
+    return {
+      nav: [
+        mk('My goals', 'Main.dc.html', icons.goals, true, 0),
+        mk('My reviews', 'Review-Draft.dc.html', icons.reviews, false, 1)
+      ],
+      subtitle: fy === 'all' ? 'All fiscal years' : 'FY' + fy + (fy === '2027' ? ' (Oct 2026 – Sep 2027)' : ''),
+      filters,
+      fyValue: fy,
+      setFy: (e) => this.setState({ fy: e.target.value, openId: null, cancelId: null }),
+      showBanner,
+      bannerText: 'You haven’t updated ' + due + ' of your ' + activeNow + ' active goals this month. Open a goal below and update it right on the card.',
+      empty: cards.length === 0,
+      goals: cards
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Admin-Questions.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Admin: Questions and cycles",
+      "w": 1280,
+      "x": 6800,
+      "y": -20,
+      "is_interactive": true
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Employee: My goals",
+      "w": 1280,
+      "x": 0,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Manager-Review.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "Manager: Review a report",
+      "w": 1280,
+      "x": 2720,
+      "y": 0
+    },
+    "Person-Goals.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Manager: A report's goals",
+      "w": 1280,
+      "x": 5440,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Review-Draft.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "Employee: Review draft",
+      "w": 1280,
+      "x": 1360,
+      "y": 0
+    },
+    "Signed-Record.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "Manager: Signed record (read-only)",
+      "w": 1280,
+      "x": 8160,
+      "y": 0
+    },
+    "Team-Dashboard.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Manager: Team dashboard",
+      "w": 1280,
+      "x": 4080,
+      "y": 0
+    },
+    "Launch-Reviews.dc.html": {
+      "expand": "fill",
+      "h": 1500,
+      "title": "Head: Launch reviews",
+      "w": 1280,
+      "x": 9520,
+      "y": 0,
+      "is_interactive": true
+    },
+    "Admin-Departments.dc.html": {
+      "expand": "fill",
+      "h": 1200,
+      "title": "Super admin: Departments",
+      "w": 1280,
+      "x": 10880,
+      "y": 0,
+      "is_interactive": true
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-10T21:40:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "title",
+    "signoff"
+  ],
+  "notes": {
+    "signoff": {
+      "fill": "blue",
+      "text": "Employee sign-off reuses this layout: the manager's comments are read-only, with Agree / Disagree, a note, and a Sign button at the bottom.",
+      "w": 320,
+      "x": 2720,
+      "y": 1080
+    },
+    "title": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Review platform: key screens",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Review-Draft.dc.html",
+    "Manager-Review.dc.html",
+    "Team-Dashboard.dc.html",
+    "Person-Goals.dc.html",
+    "Admin-Questions.dc.html",
+    "Signed-Record.dc.html",
+    "Launch-Reviews.dc.html",
+    "Admin-Departments.dc.html"
+  ],
+  "pages": [],
+  "title": "Review Platform Screens"
+}

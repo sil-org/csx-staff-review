@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My team</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 900px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="3">
+        <a href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <span>{{item.label}}</span>
+          <sc-if value="{{item.badge}}" hint-placeholder-val="{{ false }}">
+            <span style="margin-left: auto; background: #005CB9; color: #ffffff; border-radius: 999px; font-size: 12px; font-weight: 600; padding: 1px 8px">{{item.badge}}</span>
+          </sc-if>
+        </a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">
+      <div style="margin-bottom: 6px">morgan.ellis@sil.org</div>
+      <a href="#" style="font-size: 13px">Sign out</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+      <div>
+        <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">My team</h1>
+        <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">{{subtitle}}</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <label for="period" style="font-size: 13px; font-weight: 600; color: #4b5563">Period</label>
+          <select id="period" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+            <option selected>All history</option>
+            <option>Q1 2026 (current)</option>
+            <option>Annual 2025</option>
+            <option>Q3 2025</option>
+            <option>Q2 2025</option>
+            <option>Q1 2025</option>
+            <option>Annual 2024</option>
+          </select>
+        </div>
+        <button type="button" aria-pressed="false" style="background: #ffffff; color: #374151; border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Direct reports (4)</button>
+        <button type="button" aria-pressed="true" style="background: #005CB9; color: #ffffff; border: 1px solid #005CB9; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Whole team (8)</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px">
+      <sc-for list="{{tiles}}" as="tile" hint-placeholder-count="4">
+        <div style="flex: 1 1 180px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box">
+          <span style="align-self: flex-start; background: {{tile.chipBg}}; color: {{tile.chipFg}}; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px">{{tile.label}}</span>
+          <span style="font-size: 36px; font-weight: 700; line-height: 1">{{tile.count}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="margin-top: 24px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow-x: auto">
+      <table style="width: 100%; min-width: 860px; border-collapse: collapse; font-size: 15px">
+        <thead>
+          <tr style="text-align: left; background: #f9fafb">
+            <th scope="col" style="padding: 12px 16px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Person</th>
+            <th scope="col" style="padding: 12px 16px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Period</th>
+            <th scope="col" style="padding: 12px 16px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Reports to</th>
+            <th scope="col" style="padding: 12px 16px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Review</th>
+            <th scope="col" style="padding: 12px 16px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Goal check-ins in November</th>
+            <th scope="col" style="padding: 12px 16px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="row" hint-placeholder-count="8">
+            <tr>
+              <th scope="row" style="padding: 12px 16px; font-weight: 600; text-align: left; border-bottom: 1px solid #f3f4f6">
+                <sc-if value="{{row.isDirect}}" hint-placeholder-val="{{ false }}">
+                  <a href="Person-Goals.dc.html">{{row.name}}</a>
+                </sc-if>
+                <sc-if value="{{row.notDirect}}" hint-placeholder-val="{{ false }}">
+                  <span>{{row.name}}</span>
+                </sc-if>
+              </th>
+              <td style="padding: 12px 16px; color: #4b5563; border-bottom: 1px solid #f3f4f6; white-space: nowrap">{{row.period}}</td>
+              <td style="padding: 12px 16px; color: #4b5563; border-bottom: 1px solid #f3f4f6">{{row.reportsTo}}</td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #f3f4f6"><span style="background: {{row.chipBg}}; color: {{row.chipFg}}; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap">{{row.status}}</span></td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #f3f4f6">{{row.checkins}}</td>
+              <td style="padding: 8px 16px; border-bottom: 1px solid #f3f4f6">
+                <sc-if value="{{row.isOpen}}" hint-placeholder-val="{{ false }}">
+                  <a href="Manager-Review.dc.html" style="display: inline-block; background: #005CB9; color: #ffffff; text-decoration: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; min-height: 20px">Open review</a>
+                </sc-if>
+                <sc-if value="{{row.isView}}" hint-placeholder-val="{{ false }}">
+                  <a href="Signed-Record.dc.html" style="display: inline-block; background: #ffffff; color: #005CB9; border: 1px solid #005CB9; text-decoration: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600">View signed record</a>
+                </sc-if>
+                <sc-if value="{{row.isRemind}}" hint-placeholder-val="{{ false }}">
+                  <button type="button" style="background: #ffffff; color: #005CB9; border: 1px solid #005CB9; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Send reminder</button>
+                </sc-if>
+                <sc-if value="{{row.isReminded}}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size: 14px; color: #4b5563">Reminded Nov 8</span>
+                </sc-if>
+                <sc-if value="{{row.isNone}}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size: 14px; color: #4b5563">No action needed</span>
+                </sc-if>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin: 12px 0 0; font-size: 13px; color: #4b5563">Click a direct report&rsquo;s name to see their goals. For your direct reports you can also open any review, past or present. For everyone else on your team you see status only, not answers or goals. Each person can be reminded once every 3 days.</p>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const icons = {
+      goals: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      reviews: 'M9 3h6v3H9z M7 5H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2 M8 12h8 M8 16h5',
+      team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'
+    };
+    const mk = (label, href, icon, active, badge) => ({
+      label, href, icon, badge,
+      color: active ? '#005CB9' : '#4b5563',
+      bg: active ? 'rgba(0,92,185,0.08)' : 'transparent',
+      border: active ? '#005CB9' : 'transparent',
+      weight: active ? '600' : '400'
+    });
+    const st = {
+      draft: ['With the employee', '#e5e7eb', '#374151'],
+      mine: ['With you', '#dce9f8', '#034D8A'],
+      sign: ['Awaiting sign-off', '#f2dff0', '#6b2467'],
+      done: ['Signed off', '#e3f1db', '#2d5a17']
+    };
+    const row = (name, reportsTo, s, checkins, action, period) => ({
+      name, reportsTo, checkins, period: period || 'Q1 2026',
+      isDirect: reportsTo === 'You',
+      notDirect: reportsTo !== 'You',
+      status: st[s][0], chipBg: st[s][1], chipFg: st[s][2],
+      isView: action === 'view',
+      isOpen: action === 'open',
+      isRemind: action === 'remind',
+      isReminded: action === 'reminded',
+      isNone: action === 'none'
+    });
+    const rows = [
+      row('Alex Rivera', 'You', 'mine', '2 of 4', 'open'),
+      row('Jamie Cho', 'You', 'mine', '3 of 3', 'open'),
+      row('Priya Shah', 'You', 'draft', '4 of 4', 'remind'),
+      row('Sam Okafor', 'You', 'draft', '1 of 3', 'reminded'),
+      row('Taylor Nguyen', 'Priya Shah', 'sign', '3 of 3', 'none'),
+      row('Casey Brooks', 'Priya Shah', 'done', '2 of 2', 'none'),
+      row('Devon Reyes', 'Sam Okafor', 'draft', '0 of 2', 'remind'),
+      row('Quinn Adler', 'Sam Okafor', 'done', '2 of 2', 'none'),
+      row('Alex Rivera', 'You', 'done', '4 of 4', 'view', 'Annual 2025'),
+      row('Jamie Cho', 'You', 'done', '3 of 3', 'view', 'Annual 2025'),
+      row('Priya Shah', 'You', 'done', '4 of 4', 'view', 'Annual 2025'),
+      row('Sam Okafor', 'You', 'done', '2 of 3', 'view', 'Annual 2025'),
+      row('Taylor Nguyen', 'Priya Shah', 'done', '3 of 3', 'none', 'Annual 2025'),
+      row('Alex Rivera', 'You', 'done', '3 of 3', 'view', 'Q3 2025'),
+      row('Jamie Cho', 'You', 'done', '3 of 3', 'view', 'Q3 2025'),
+      row('Priya Shah', 'You', 'done', '3 of 3', 'view', 'Q3 2025')
+    ];
+    const count = key => rows.filter(r => r.status === st[key][0]).length;
+    return {
+      subtitle: 'All history · ' + rows.length + ' reviews · 8 people',
+      nav: [
+        mk('My goals', 'Main.dc.html', icons.goals, false, 0),
+        mk('My reviews', 'Review-Draft.dc.html', icons.reviews, false, 0),
+        mk('My team', 'Team-Dashboard.dc.html', icons.team, true, 2)
+      ],
+      tiles: [
+        { label: st.draft[0], chipBg: st.draft[1], chipFg: st.draft[2], count: count('draft') },
+        { label: st.mine[0], chipBg: st.mine[1], chipFg: st.mine[2], count: count('mine') },
+        { label: st.sign[0], chipBg: st.sign[1], chipFg: st.sign[2], count: count('sign') },
+        { label: st.done[0], chipBg: st.done[1], chipFg: st.done[2], count: count('done') }
+      ],
+      rows
+    };
+  }
+}
+</script>
+</body>
+</html>

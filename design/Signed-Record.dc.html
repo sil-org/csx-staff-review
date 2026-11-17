@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Signed review record</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 1000px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="3">
+        <a href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <span>{{item.label}}</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">
+      <div style="margin-bottom: 6px">morgan.ellis@sil.org</div>
+      <a href="#" style="font-size: 13px">Sign out</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="max-width: 900px">
+      <p style="margin: 0 0 8px; font-size: 14px; color: #4b5563"><a href="Team-Dashboard.dc.html">My team</a> / Alex Rivera</p>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+          <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">Annual 2025 review: Alex Rivera</h1>
+          <span style="background: #e3f1db; color: #2d5a17; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px">Signed off and locked</span>
+        </div>
+        <button type="button" style="background: #ffffff; color: #005CB9; border: 1px solid #005CB9; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Download PDF</button>
+      </div>
+      <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">Locked Jan 14, 2026. This record can&rsquo;t be changed.</p>
+
+      <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 0 4px; font-size: 13px; font-weight: 600; color: #4b5563; text-transform: uppercase; letter-spacing: 0.04em">
+          <span style="flex: 1 1 240px">Alex&rsquo;s answer</span>
+          <span style="flex: 1 1 240px">Morgan&rsquo;s response</span>
+        </div>
+
+        <sc-for list="{{items}}" as="item" hint-placeholder-count="3">
+          <section style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+            <h2 style="margin: 0; font-size: 16px">{{item.prompt}}</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 16px">
+              <div style="flex: 1 1 240px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px; line-height: 1.5; box-sizing: border-box">{{item.answer}}</div>
+              <div style="flex: 1 1 240px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px; line-height: 1.5; box-sizing: border-box">{{item.response}}</div>
+            </div>
+          </section>
+        </sc-for>
+
+        <section style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px">
+          <h2 style="margin: 0; font-size: 16px">Overall comment</h2>
+          <div style="background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px; line-height: 1.5">A strong year. Alex led the onboarding work and grew into mentoring two new hires.</div>
+        </section>
+
+        <section style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 8px">
+          <h2 style="margin: 0; font-size: 16px">Alex&rsquo;s sign-off</h2>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+            <span style="background: #e3f1db; color: #2d5a17; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px">Agreed</span>
+            <span style="font-size: 14px; color: #4b5563">Signed by Alex Rivera on Jan 14, 2026</span>
+          </div>
+          <div style="background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 15px">Thanks for the feedback. I&rsquo;ll take on the Q1 mentoring plan.</div>
+        </section>
+
+        <p style="margin: 0; font-size: 13px; color: #4b5563">Record fingerprint (SHA-256): 9f2c41&hellip;b7e0. It is checked each time this record is opened.</p>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const icons = {
+      goals: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      reviews: 'M9 3h6v3H9z M7 5H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2 M8 12h8 M8 16h5',
+      team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75'
+    };
+    const mk = (label, href, icon, active) => ({
+      label, href, icon,
+      color: active ? '#005CB9' : '#4b5563',
+      bg: active ? 'rgba(0,92,185,0.08)' : 'transparent',
+      border: active ? '#005CB9' : 'transparent',
+      weight: active ? '600' : '400'
+    });
+    return {
+      nav: [
+        mk('My goals', 'Main.dc.html', icons.goals, false),
+        mk('My reviews', 'Review-Draft.dc.html', icons.reviews, false),
+        mk('My team', 'Team-Dashboard.dc.html', icons.team, true)
+      ],
+      items: [
+        { prompt: '1. What went well this year?', answer: 'We shipped the onboarding checklist company-wide. Setup time dropped from three days to one.', response: 'Great result. The numbers made the case for expanding it.' },
+        { prompt: '2. Overall self-rating', answer: 'Meets expectations', response: 'Exceeds expectations' },
+        { prompt: '3. Anything else you want your manager to know?', answer: 'I would like to mentor new hires.', response: 'Agreed. Let’s plan it for Q1.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

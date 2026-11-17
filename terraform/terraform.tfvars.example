@@ -1,0 +1,13 @@
+# Copy to terraform.tfvars and fill in (never commit terraform.tfvars).
+
+github_access_token = "ghp_xxxxx"
+
+# The shared GTIS Supabase project -- same values as License Manager's .env.
+supabase_url      = "https://your-project-id.supabase.co"
+supabase_anon_key = "your-anon-key-here"
+
+# Only if the shared project signs in through the SIL IdP (see variables.tf).
+sso_provider_id = "00000000-0000-0000-0000-000000000000"
+
+# domain_name / subdomain default to sil.org / reviews -- override here if
+# this deploy uses a different one.

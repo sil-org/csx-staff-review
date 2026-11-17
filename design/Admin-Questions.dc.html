@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review questions and cycles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 1500px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="4">
+        <a href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+          <span>{{item.label}}</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">
+      <div style="margin-bottom: 6px">jordan.lee@sil.org</div>
+      <a href="#" style="font-size: 13px">Sign out</a>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+      <div>
+        <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">Questions and cycles</h1>
+        <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">Set the questions, then open a cycle to create a review for every participant.</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <button type="button" aria-pressed="{{quarterlyPressed}}" onClick="{{showQuarterly}}" style="background: {{quarterlyBg}}; color: {{quarterlyFg}}; border: 1px solid {{quarterlyBorder}}; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Quarterly</button>
+        <button type="button" aria-pressed="{{annualPressed}}" onClick="{{showAnnual}}" style="background: {{annualBg}}; color: {{annualFg}}; border: 1px solid {{annualBorder}}; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Annual</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 24px; align-items: flex-start">
+      <div style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+        <section aria-labelledby="qhead" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-sizing: border-box">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px">
+            <h2 id="qhead" style="margin: 0; font-size: 18px">{{kindTitle}} review questions</h2>
+            <span style="background: #e3f1db; color: #2d5a17; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px">Active template</span>
+          </div>
+          <p style="margin: 4px 0 16px; font-size: 14px; color: #4b5563">Drag a question by its handle to reorder. It works with a finger or a mouse. Changes apply to reviews opened after you save. Reviews already open keep the questions they started with.</p>
+
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{questions}}" as="q" hint-placeholder-count="3">
+              <div data-qid="{{q.id}}" style="border: 1px solid {{q.border}}; border-radius: 10px; background: #ffffff; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; opacity: {{q.opacity}}; box-shadow: {{q.shadow}}">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+                  <button type="button" aria-label="Reorder question {{q.n}}. Drag, or press the up and down arrow keys." title="Drag to reorder" onPointerDown="{{q.pointerDown}}" onPointerMove="{{q.pointerMove}}" onPointerUp="{{q.pointerUp}}" onPointerCancel="{{q.pointerCancel}}" onKeyDown="{{q.keyDown}}" style="cursor: grab; touch-action: none; user-select: none; width: 44px; height: 44px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; color: #4b5563; display: flex; align-items: center; justify-content: center; padding: 0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"></circle><circle cx="15" cy="6" r="1.7"></circle><circle cx="9" cy="12" r="1.7"></circle><circle cx="15" cy="12" r="1.7"></circle><circle cx="9" cy="18" r="1.7"></circle><circle cx="15" cy="18" r="1.7"></circle></svg>
+                  </button>
+                  <span style="font-weight: 700; color: #4b5563; width: 20px">{{q.n}}</span>
+                  <div style="flex: 1 1 200px; min-width: 0">
+                    <div style="font-size: 15px; font-weight: 600">{{q.title}}<sc-if value="{{q.required}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="color: #b42318; font-weight: 700"> *</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)"> (required)</span></sc-if></div>
+                    <div style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap">
+                      <span style="background: #e5e7eb; color: #374151; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 8px">{{q.typeLabel}}</span>
+                      <sc-if value="{{q.restricted}}" hint-placeholder-val="{{ false }}">
+                        <span style="background: #f2dff0; color: #6b2467; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 8px">{{q.audienceLabel}}</span>
+                      </sc-if>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap">
+                    <button type="button" onClick="{{q.toggleEdit}}" style="background: #ffffff; color: #005CB9; border: 1px solid #005CB9; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">{{q.editLabel}}</button>
+                    <button type="button" onClick="{{q.remove}}" style="background: #ffffff; color: #8f1519; border: 1px solid #8f1519; border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Remove</button>
+                  </div>
+                </div>
+
+                <sc-if value="{{q.editing}}" hint-placeholder-val="{{ false }}">
+                  <div style="border-top: 1px solid #e5e7eb; padding-top: 14px; display: flex; flex-direction: column; gap: 12px">
+                    <div style="display: flex; flex-direction: column; gap: 4px">
+                      <label for="{{q.promptId}}" style="font-size: 14px; font-weight: 600">Question</label>
+                      <input id="{{q.promptId}}" type="text" value="{{q.prompt}}" onChange="{{q.setPrompt}}" placeholder="Type the question" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; box-sizing: border-box; font-family: inherit">
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+                      <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px">
+                        <label for="{{q.typeId}}" style="font-size: 14px; font-weight: 600">Answer type</label>
+                        <select id="{{q.typeId}}" value="{{q.type}}" onChange="{{q.setType}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+                          <option value="paragraph">Paragraph</option>
+                          <option value="short_text">Short text</option>
+                          <option value="select">Select (dropdown)</option>
+                        </select>
+                      </div>
+                      <label for="{{q.reqId}}" style="display: flex; gap: 10px; align-items: center; font-size: 15px; min-height: 44px">
+                        <input id="{{q.reqId}}" type="checkbox" checked="{{q.required}}" onChange="{{q.setRequired}}" style="width: 20px; height: 20px">
+                        <span>Required <span aria-hidden="true" style="color: #b42318; font-weight: 700">*</span></span>
+                      </label>
+                    </div>
+                    <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px">
+                      <legend style="font-size: 14px; font-weight: 600; padding: 0 0 4px">Who is asked this question</legend>
+                      <div style="display: flex; flex-wrap: wrap; gap: 4px 20px">
+                        <sc-for list="{{q.audienceOptions}}" as="a" hint-placeholder-count="3">
+                          <label for="{{a.id}}" style="display: flex; gap: 8px; align-items: center; font-size: 15px; min-height: 44px">
+                            <input id="{{a.id}}" type="checkbox" checked="{{a.checked}}" onChange="{{a.toggle}}" style="width: 20px; height: 20px">
+                            <span>{{a.label}}</span>
+                          </label>
+                        </sc-for>
+                      </div>
+                      <span style="font-size: 13px; color: #4b5563">People of an unchecked type never see this question. At least one type stays checked.</span>
+                    </fieldset>
+                    <sc-if value="{{q.isSelect}}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; flex-direction: column; gap: 4px">
+                        <label for="{{q.optId}}" style="font-size: 14px; font-weight: 600">Choices <span style="font-weight: 400; color: #4b5563">(one per line)</span></label>
+                        <textarea id="{{q.optId}}" rows="4" value="{{q.options}}" onChange="{{q.setOptions}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; resize: vertical; box-sizing: border-box; width: 100%"></textarea>
+                        <span style="font-size: 13px; color: #4b5563">Your manager answers with the same choices.</span>
+                      </div>
+                    </sc-if>
+                    <div>
+                      <button type="button" onClick="{{q.toggleEdit}}" style="background: #005CB9; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Done</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+            <button type="button" onClick="{{addQuestion}}" style="background: #ffffff; color: #005CB9; border: 1px solid #005CB9; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Add a question</button>
+            <button type="button" onClick="{{save}}" style="background: #005CB9; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Save changes</button>
+            <span role="status" style="font-size: 14px; color: #2d5a17">{{savedMessage}}</span>
+          </div>
+        </section>
+
+        <section aria-labelledby="cyc" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-sizing: border-box">
+          <h2 id="cyc" style="margin: 0 0 4px; font-size: 18px">Review cycles</h2>
+          <p style="margin: 0 0 12px; font-size: 14px; color: #4b5563">Every cycle opened so far, newest first.</p>
+          <div style="overflow-x: auto">
+            <table style="width: 100%; min-width: 520px; border-collapse: collapse; font-size: 15px">
+              <thead>
+                <tr style="text-align: left; background: #f9fafb">
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Cycle</th>
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Opened</th>
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Reviews</th>
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Signed off</th>
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{cycles}}" as="c" hint-placeholder-count="5">
+                  <tr>
+                    <th scope="row" style="padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #f3f4f6">{{c.name}}</th>
+                    <td style="padding: 10px 12px; color: #4b5563; border-bottom: 1px solid #f3f4f6; white-space: nowrap">{{c.opened}}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #f3f4f6">{{c.total}}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #f3f4f6">
+                      <div style="display: flex; align-items: center; gap: 8px">
+                        <div role="progressbar" aria-label="Signed off" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{c.pct}}" style="width: 90px; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden">
+                          <div style="width: {{c.barWidth}}; height: 100%; background: #3f7f24"></div>
+                        </div>
+                        <span style="font-size: 14px">{{c.done}}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #f3f4f6"><span style="background: {{c.chipBg}}; color: {{c.chipFg}}; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 3px 10px; white-space: nowrap">{{c.status}}</span></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section aria-labelledby="part" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-sizing: border-box">
+          <h2 id="part" style="margin: 0 0 4px; font-size: 18px">Participants</h2>
+          <p style="margin: 0 0 4px; font-size: 14px; color: #4b5563">Only people listed here get reviews. Their hours decide which reviews they must have. Their worker type decides which questions they are asked.</p>
+          <p style="margin: 0 0 12px; font-size: 14px; color: #4b5563">{{peopleSummary}}</p>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px">
+            <div style="flex: 2 1 200px; display: flex; flex-direction: column; gap: 4px">
+              <label for="email" style="font-size: 14px; font-weight: 600">Add by email</label>
+              <input id="email" type="email" placeholder="name@sil.org" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; box-sizing: border-box; font-family: inherit">
+            </div>
+            <div style="flex: 1 1 130px; display: flex; flex-direction: column; gap: 4px">
+              <label for="newWorker" style="font-size: 14px; font-weight: 600">Worker type</label>
+              <select id="newWorker" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+                <option>Paid</option>
+                <option>Seconded</option>
+                <option>Volunteer</option>
+              </select>
+            </div>
+            <div style="flex: 1 1 130px; display: flex; flex-direction: column; gap: 4px">
+              <label for="newHours" style="font-size: 14px; font-weight: 600">Hours</label>
+              <select id="newHours" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+                <option>Full-time</option>
+                <option>Part-time</option>
+              </select>
+            </div>
+            <button type="button" style="background: #005CB9; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Add person</button>
+          </div>
+
+          <div style="overflow-x: auto">
+            <table style="width: 100%; min-width: 520px; border-collapse: collapse; font-size: 15px">
+              <thead>
+                <tr style="text-align: left; background: #f9fafb">
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Person</th>
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Worker type</th>
+                  <th scope="col" style="padding: 10px 12px; font-size: 13px; color: #4b5563; font-weight: 600; border-bottom: 1px solid #e5e7eb">Hours</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{people}}" as="p" hint-placeholder-count="8">
+                  <tr>
+                    <th scope="row" style="padding: 6px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #f3f4f6">{{p.name}}</th>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #f3f4f6">
+                      <label for="{{p.workerId}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Worker type for {{p.name}}</label>
+                      <select id="{{p.workerId}}" value="{{p.worker}}" onChange="{{p.setWorker}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+                        <option value="paid">Paid</option>
+                        <option value="seconded">Seconded</option>
+                        <option value="volunteer">Volunteer</option>
+                      </select>
+                    </td>
+                    <td style="padding: 6px 12px; border-bottom: 1px solid #f3f4f6">
+                      <label for="{{p.hoursId}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Hours for {{p.name}}</label>
+                      <select id="{{p.hoursId}}" value="{{p.hours}}" onChange="{{p.setHours}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+                        <option value="full_time">Full-time</option>
+                        <option value="part_time">Part-time</option>
+                      </select>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top: 12px">
+            <button type="button" style="background: #ffffff; color: #005CB9; border: 1px solid #005CB9; border-radius: 8px; padding: 8px 16px; font-size: 14px; font-weight: 600; min-height: 44px; font-family: inherit">Add a manager&rsquo;s whole team</button>
+          </div>
+        </section>
+      </div>
+
+      <div style="flex: 1 1 320px; max-width: 420px; display: flex; flex-direction: column; gap: 16px">
+        <form style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+          <h2 style="margin: 0; font-size: 18px">Open a review cycle</h2>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <label for="cycle" style="font-size: 14px; font-weight: 600">Cycle</label>
+            <select id="cycle" value="{{cycleValue}}" onChange="{{setCycle}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; background: #ffffff; font-family: inherit">
+              <option value="Q1 2026">Q1 2026</option>
+              <option value="Q2 2026">Q2 2026</option>
+              <option value="Q3 2026">Q3 2026</option>
+              <option value="Q4 2026">Q4 2026</option>
+              <option value="Annual 2026">Annual 2026</option>
+            </select>
+          </div>
+          <p style="margin: 0; font-size: 14px; color: #4b5563">{{cycleNote}}</p>
+          <button type="button" disabled="{{cycleDisabled}}" style="align-self: flex-start; background: {{cycleBtnBg}}; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">{{cycleBtnLabel}}</button>
+        </form>
+
+        <section aria-labelledby="req" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <h2 id="req" style="margin: 0; font-size: 18px">Required reviews</h2>
+          <p style="margin: 0; font-size: 14px; color: #4b5563">Which reviews each person must have, based on their hours. Opening a cycle creates reviews only for people it is required for.</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 15px">
+            <thead>
+              <tr style="text-align: left">
+                <th scope="col" style="padding: 6px 4px; font-size: 13px; color: #4b5563; font-weight: 600">Review</th>
+                <th scope="col" style="padding: 6px 4px; font-size: 13px; color: #4b5563; font-weight: 600; text-align: center">Full-time</th>
+                <th scope="col" style="padding: 6px 4px; font-size: 13px; color: #4b5563; font-weight: 600; text-align: center">Part-time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{requiredRows}}" as="r" hint-placeholder-count="5">
+                <tr>
+                  <th scope="row" style="padding: 2px 4px; text-align: left; font-weight: 600; border-top: 1px solid #f3f4f6">{{r.label}}</th>
+                  <td style="padding: 2px 4px; text-align: center; border-top: 1px solid #f3f4f6">
+                    <label for="{{r.ftId}}" style="display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px"><input id="{{r.ftId}}" type="checkbox" checked="{{r.ftChecked}}" onChange="{{r.ftToggle}}" aria-label="{{r.ftLabel}}" style="width: 20px; height: 20px"></label>
+                  </td>
+                  <td style="padding: 2px 4px; text-align: center; border-top: 1px solid #f3f4f6">
+                    <label for="{{r.ptId}}" style="display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px"><input id="{{r.ptId}}" type="checkbox" checked="{{r.ptChecked}}" onChange="{{r.ptToggle}}" aria-label="{{r.ptLabel}}" style="width: 20px; height: 20px"></label>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <p style="margin: 0; font-size: 13px; color: #4b5563">Q4 stays off for everyone while the Q4 setting below is on.</p>
+        </section>
+
+        <section aria-labelledby="set" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+          <h2 id="set" style="margin: 0; font-size: 18px">Settings</h2>
+          <label for="q4" style="display: flex; gap: 10px; align-items: flex-start; font-size: 15px">
+            <input id="q4" type="checkbox" checked="{{skipQ4}}" onChange="{{toggleSkipQ4}}" style="width: 20px; height: 20px; margin-top: 2px">
+            <span>Skip the Q4 quarterly review. The annual review covers it.</span>
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <label for="day" style="font-size: 14px; font-weight: 600">Monthly check-in reminder goes out on day</label>
+            <input id="day" type="number" min="1" max="28" value="1" style="width: 96px; border: 1px solid #9ca3af; border-radius: 8px; padding: 10px 12px; font-size: 15px; min-height: 44px; box-sizing: border-box; font-family: inherit">
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+  defaults() {
+    const ALL = ['paid', 'seconded', 'volunteer'];
+    const q = (id, prompt, type, required, options, audience) => ({ id, prompt, type, required, options: options || '', audience: audience || ALL });
+    return {
+      quarterly: [
+        q('q1', 'What went well this quarter?', 'paragraph', true),
+        q('q2', 'Overall self-rating', 'select', true, 'Exceeds expectations\nMeets expectations\nBelow expectations'),
+        q('q3', 'Anything else you want your manager to know?', 'short_text', false),
+        q('q4', 'Is there anything your sending organization should hear about?', 'short_text', false, '', ['seconded'])
+      ],
+      annual: [
+        q('a1', 'What were your biggest accomplishments this year?', 'paragraph', true),
+        q('a2', 'Overall performance rating for the year', 'select', true, 'Outstanding\nExceeds expectations\nMeets expectations\nBelow expectations'),
+        q('a3', 'What do you want to focus on next year?', 'paragraph', true),
+        q('a4', 'What is your professional development plan for next year?', 'paragraph', false, '', ['paid', 'seconded']),
+        q('a5', 'Anything else?', 'short_text', false)
+      ]
+    };
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const kind = s.kind || 'quarterly';
+    const all = s.qs || this.defaults();
+    const list = all[kind];
+    const dragId = s.dragId || null;
+    const overId = s.overId || null;
+    const editId = s.editId || null;
+    const skipQ4 = s.skipQ4 === undefined ? true : s.skipQ4;
+    const cycle = s.cycle || 'Q2 2026';
+    const person = (name, worker, hours) => ({ name, worker, hours });
+    const people = s.people || [
+      person('Alex Rivera', 'paid', 'full_time'), person('Jamie Cho', 'paid', 'full_time'),
+      person('Priya Shah', 'paid', 'full_time'), person('Sam Okafor', 'seconded', 'full_time'),
+      person('Taylor Nguyen', 'paid', 'part_time'), person('Casey Brooks', 'volunteer', 'part_time'),
+      person('Devon Reyes', 'paid', 'full_time'), person('Quinn Adler', 'seconded', 'part_time')
+    ];
+    const req = s.req || {
+      full_time: { q1: true, q2: true, q3: true, q4: true, annual: true },
+      part_time: { q1: false, q2: false, q3: false, q4: false, annual: true }
+    };
+    const setReq = (hours, key, val) => this.setState({ req: { ...req, [hours]: { ...req[hours], [key]: val } } });
+    const setPerson = (i, fields) => this.setState({ people: people.map((p, j) => (j === i ? { ...p, ...fields } : p)) });
+
+    const commit = (next) => this.setState({ qs: { ...all, [kind]: next }, saved: false });
+    const patch = (id, fields) => commit(list.map((x) => (x.id === id ? { ...x, ...fields } : x)));
+    const move = (from, to) => {
+      if (from < 0 || to < 0 || to >= list.length || from === to) return;
+      const next = list.slice();
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      commit(next);
+    };
+
+    const icons = {
+      goals: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+      reviews: 'M9 3h6v3H9z M7 5H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2 M8 12h8 M8 16h5',
+      team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M22 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+      admin: 'M4 6h10 M18 6h2 M4 12h2 M10 12h10 M4 18h12 M14 4v4 M6 10v4 M16 16v4'
+    };
+    const mk = (label, href, icon, active) => ({
+      label, href, icon,
+      color: active ? '#005CB9' : '#4b5563',
+      bg: active ? 'rgba(0,92,185,0.08)' : 'transparent',
+      border: active ? '#005CB9' : 'transparent',
+      weight: active ? '600' : '400'
+    });
+
+    const typeNames = { paragraph: 'Paragraph', short_text: 'Short text', select: 'Select' };
+    const questions = list.map((x, i) => {
+      const isOver = overId === x.id && dragId && dragId !== x.id;
+      const dragIndex = list.findIndex((y) => y.id === dragId);
+      const choices = (x.options || '').split('\n').map((t) => t.trim()).filter(Boolean);
+      return {
+        n: String(i + 1),
+        title: x.prompt || 'New question (no text yet)',
+        typeLabel: x.type === 'select' ? 'Select: ' + (choices.slice(0, 3).join(', ') || 'no choices yet') : typeNames[x.type],
+        req: x.required ? 'Required' : 'Optional',
+        reqBg: x.required ? '#dce9f8' : '#f3f4f6',
+        reqFg: x.required ? '#034D8A' : '#374151',
+        restricted: x.audience.length < 3,
+        audienceLabel: (() => {
+          const names = { paid: 'paid', seconded: 'seconded', volunteer: 'volunteers' };
+          const t = x.audience.map((k) => names[k]).join(' and ');
+          return 'Asked of: ' + t;
+        })(),
+        audienceOptions: [['paid', 'Paid'], ['seconded', 'Seconded'], ['volunteer', 'Volunteers']].map(([k, label]) => ({
+          id: 'a-' + x.id + '-' + k, label, checked: x.audience.includes(k),
+          toggle: () => {
+            const has = x.audience.includes(k);
+            const next = ['paid', 'seconded', 'volunteer'].filter((v) => (v === k ? !has : x.audience.includes(v)));
+            if (next.length === 0) return;
+            patch(x.id, { audience: next });
+          }
+        })),
+        editing: editId === x.id,
+        editLabel: editId === x.id ? 'Close' : 'Edit',
+        id: x.id,
+        border: isOver ? '#005CB9' : (editId === x.id ? '#005CB9' : '#e5e7eb'),
+        opacity: dragId === x.id ? '0.45' : '1',
+        shadow: isOver ? (dragIndex < i ? '0 3px 0 0 #005CB9' : '0 -3px 0 0 #005CB9') : 'none',
+        promptId: 'p-' + x.id, typeId: 't-' + x.id, reqId: 'r-' + x.id, optId: 'o-' + x.id,
+        prompt: x.prompt, type: x.type, required: x.required, options: x.options,
+        isSelect: x.type === 'select',
+        // Pointer events cover mouse, touch and pen. The handle captures the pointer, so moves
+        // keep arriving even when the finger leaves the handle, and touch-action: none stops
+        // the page from scrolling while a question is being dragged.
+        pointerDown: (e) => {
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+          this.setState({ dragId: x.id, overId: null });
+        },
+        pointerMove: (e) => {
+          if (dragId !== x.id) return;
+          const el = document.elementFromPoint(e.clientX, e.clientY);
+          const row = el && el.closest ? el.closest('[data-qid]') : null;
+          const target = row ? row.getAttribute('data-qid') : null;
+          if (target !== overId) this.setState({ overId: target });
+        },
+        pointerUp: (e) => {
+          if (dragId !== x.id) return;
+          try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (err) {}
+          const to = list.findIndex((y) => y.id === overId);
+          this.setState({ dragId: null, overId: null });
+          if (to >= 0) move(i, to);
+        },
+        pointerCancel: () => this.setState({ dragId: null, overId: null }),
+        // Keyboard users reorder with the arrow keys while the handle has focus.
+        keyDown: (e) => {
+          if (e.key === 'ArrowUp') { e.preventDefault(); move(i, i - 1); }
+          if (e.key === 'ArrowDown') { e.preventDefault(); move(i, i + 1); }
+        },
+        toggleEdit: () => this.setState({ editId: editId === x.id ? null : x.id }),
+        remove: () => { commit(list.filter((y) => y.id !== x.id)); if (editId === x.id) this.setState({ editId: null }); },
+        setPrompt: (e) => patch(x.id, { prompt: e.target.value }),
+        setType: (e) => patch(x.id, { type: e.target.value }),
+        setRequired: (e) => patch(x.id, { required: e.target.checked }),
+        setOptions: (e) => patch(x.id, { options: e.target.value })
+      };
+    });
+
+    const btn = (on) => ({
+      bg: on ? '#005CB9' : '#ffffff', fg: on ? '#ffffff' : '#374151', border: on ? '#005CB9' : '#9ca3af'
+    });
+    const qb = btn(kind === 'quarterly');
+    const ab = btn(kind === 'annual');
+
+    const bar = (done, total) => Math.round((done / total) * 100);
+    const cyc = (name, opened, total, done, status) => ({
+      name, opened, total, done: done + ' of ' + total, pct: bar(done, total), barWidth: bar(done, total) + '%',
+      status, chipBg: status === 'In progress' ? '#dce9f8' : '#e3f1db', chipFg: status === 'In progress' ? '#034D8A' : '#2d5a17'
+    });
+
+    const isQ4 = cycle === 'Q4 2026';
+    const blocked = isQ4 && skipQ4;
+    const key = cycle.startsWith('Annual') ? 'annual' : cycle.slice(0, 2).toLowerCase();
+    const needed = people.filter((p) => req[p.hours][key]).length;
+    const notNeeded = people.length - needed;
+    const alreadyOpen = cycle === 'Q1 2026' ? people.length : 0;
+    let cycleNote = needed + ' of ' + people.length + ' people need a ' + cycle + ' review.';
+    if (notNeeded > 0) cycleNote += ' ' + notNeeded + ' ' + (notNeeded === 1 ? 'person is' : 'people are') + ' not required to have one, based on their hours.';
+    if (alreadyOpen) cycleNote = 'This cycle is already open for all ' + people.length + ' people.';
+    if (blocked) cycleNote = 'Q4 reviews are skipped because the Q4 setting below is on. Turn it off to open one.';
+    const count = (fn) => people.filter(fn).length;
+    const peopleSummary = people.length + ' people: ' + count((p) => p.worker === 'paid') + ' paid, ' + count((p) => p.worker === 'seconded') + ' seconded, ' + count((p) => p.worker === 'volunteer') + ' volunteers. ' + count((p) => p.hours === 'full_time') + ' full-time, ' + count((p) => p.hours === 'part_time') + ' part-time.';
+    const reqLabels = [['q1', 'Q1'], ['q2', 'Q2'], ['q3', 'Q3'], ['q4', 'Q4'], ['annual', 'Annual']];
+
+    return {
+      nav: [
+        mk('My goals', 'Main.dc.html', icons.goals, false),
+        mk('My reviews', 'Review-Draft.dc.html', icons.reviews, false),
+        mk('My team', 'Team-Dashboard.dc.html', icons.team, false),
+        mk('Admin', 'Admin-Questions.dc.html', icons.admin, true)
+      ],
+      kindTitle: kind === 'quarterly' ? 'Quarterly' : 'Annual',
+      showQuarterly: () => this.setState({ kind: 'quarterly', editId: null }),
+      showAnnual: () => this.setState({ kind: 'annual', editId: null }),
+      quarterlyPressed: kind === 'quarterly', annualPressed: kind === 'annual',
+      quarterlyBg: qb.bg, quarterlyFg: qb.fg, quarterlyBorder: qb.border,
+      annualBg: ab.bg, annualFg: ab.fg, annualBorder: ab.border,
+      questions,
+      addQuestion: () => {
+        const id = 'n' + Date.now();
+        this.setState({ qs: { ...all, [kind]: list.concat([{ id, prompt: '', type: 'paragraph', required: false, options: '', audience: ['paid', 'seconded', 'volunteer'] }]) }, editId: id, saved: false });
+      },
+      save: () => this.setState({ saved: true, editId: null }),
+      savedMessage: s.saved ? 'Saved. New reviews will use these questions.' : '',
+      cycles: [
+        cyc('Q1 2026', 'Jan 2, 2026', 8, 2, 'In progress'),
+        cyc('Annual 2025', 'Dec 1, 2025', 5, 5, 'Complete'),
+        cyc('Q3 2025', 'Oct 1, 2025', 3, 3, 'Complete'),
+        cyc('Q2 2025', 'Jul 1, 2025', 3, 3, 'Complete'),
+        cyc('Q1 2025', 'Apr 1, 2025', 3, 3, 'Complete')
+      ],
+      cycleValue: cycle,
+      setCycle: (e) => this.setState({ cycle: e.target.value }),
+      cycleNote,
+      cycleDisabled: blocked || !!alreadyOpen || needed === 0,
+      cycleBtnBg: (blocked || alreadyOpen || needed === 0) ? '#6b7280' : '#005CB9',
+      cycleBtnLabel: blocked ? 'Q4 is skipped' : (alreadyOpen ? 'Already open' : (needed === 0 ? 'No one needs this review' : 'Open ' + cycle + ' reviews for ' + needed)),
+      skipQ4,
+      toggleSkipQ4: (e) => this.setState({ skipQ4: e.target.checked }),
+      peopleSummary,
+      people: people.map((p, i) => ({
+        name: p.name, worker: p.worker, hours: p.hours,
+        workerId: 'w-' + i, hoursId: 'h-' + i,
+        setWorker: (e) => setPerson(i, { worker: e.target.value }),
+        setHours: (e) => setPerson(i, { hours: e.target.value })
+      })),
+      requiredRows: reqLabels.map(([k, label]) => ({
+        label,
+        ftId: 'ft-' + k, ptId: 'pt-' + k,
+        ftLabel: label + ' review required for full-time', ptLabel: label + ' review required for part-time',
+        ftChecked: req.full_time[k], ptChecked: req.part_time[k],
+        ftToggle: (e) => setReq('full_time', k, e.target.checked),
+        ptToggle: (e) => setReq('part_time', k, e.target.checked)
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

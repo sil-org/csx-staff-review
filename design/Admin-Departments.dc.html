@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Departments</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#005CB9}a:hover{color:#034D8A}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', system-ui, sans-serif; color: #1f2937; background: #f9fafb; display: flex; flex-wrap: wrap; min-height: 1200px; box-sizing: border-box">
+  <nav aria-label="Main" style="flex: 0 0 224px; background: #ffffff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="padding: 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 10px"><img src="sil-logo.png" alt="SIL" style="height: 28px; width: auto; display: block"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; color: #005CB9">Reviews</span></div>
+    <div style="display: flex; flex-direction: column; padding: 8px 0; flex: 1">
+      <sc-for list="{{nav}}" as="item" hint-placeholder-count="5">
+        <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-size: 15px; text-decoration: none; color: {{item.color}}; background: {{item.bg}}; border-left: 3px solid {{item.border}}; font-weight: {{item.weight}}">{{item.label}}</a>
+      </sc-for>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; font-size: 13px; color: #4b5563">Signed in as a super admin</div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 32px; box-sizing: border-box">
+    <div style="max-width: 960px; display: flex; flex-direction: column; gap: 20px">
+      <div>
+        <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; color: #034D8A">Departments</h1>
+        <p style="margin: 4px 0 0; color: #4b5563; font-size: 15px">Fix the structure if the import got it wrong. Heads see everything beneath them, read-only. Only super admins can change this screen.</p>
+      </div>
+
+      <section aria-label="Departments" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="font-weight: 600; font-size: 18px">Structure</div>
+        <sc-for list="{{rows}}" as="d" hint-placeholder-count="4">
+          <div style="margin-left: {{d.indent}}; border: 1px solid #e5e7eb; border-left: 4px solid {{d.accent}}; border-radius: 10px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; background: #ffffff">
+            <div style="flex: 1 1 180px; min-width: 0">
+              <div style="font-weight: 600; font-size: 16px">{{d.name}}</div>
+              <div style="font-size: 13px; color: #4b5563">{{d.people}} people &middot; <span style="background: {{d.chipBg}}; color: {{d.chipFg}}; border-radius: 999px; padding: 1px 8px; font-weight: 600">{{d.sourceLabel}}</span></div>
+            </div>
+            <div style="flex: 1 1 170px; display: flex; flex-direction: column; gap: 4px">
+              <label for="{{d.headId}}" style="font-size: 13px; font-weight: 600">Head</label>
+              <select id="{{d.headId}}" value="{{d.head}}" onChange="{{d.setHead}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 10px; font-size: 14px; min-height: 44px; background: #ffffff; font-family: inherit">
+                <sc-for list="{{d.headOptions}}" as="o" hint-placeholder-count="3"><option value="{{o.id}}">{{o.label}}</option></sc-for>
+              </select>
+            </div>
+            <div style="flex: 1 1 170px; display: flex; flex-direction: column; gap: 4px">
+              <label for="{{d.parentId}}" style="font-size: 13px; font-weight: 600">Sits under</label>
+              <select id="{{d.parentId}}" value="{{d.parent}}" onChange="{{d.setParent}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 10px; font-size: 14px; min-height: 44px; background: #ffffff; font-family: inherit">
+                <sc-for list="{{d.parentOptions}}" as="o" hint-placeholder-count="3"><option value="{{o.id}}">{{o.label}}</option></sc-for>
+              </select>
+            </div>
+          </div>
+        </sc-for>
+
+        <form style="border-top: 1px solid #e5e7eb; padding-top: 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end">
+          <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 4px">
+            <label for="newname" style="font-size: 13px; font-weight: 600">New department</label>
+            <input id="newname" type="text" value="{{newName}}" onChange="{{setNewName}}" placeholder="Name" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 12px; font-size: 14px; min-height: 44px; box-sizing: border-box; font-family: inherit">
+          </div>
+          <button type="button" disabled="{{addDisabled}}" onClick="{{addDept}}" style="background: {{addBg}}; color: #ffffff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 15px; font-weight: 600; min-height: 44px; font-family: inherit">Add under IT</button>
+        </form>
+        <div style="font-size: 13px; color: #4b5563">A department can&rsquo;t be moved inside itself. Departments with people in them aren&rsquo;t deleted; move the people first.</div>
+      </section>
+
+      <section aria-label="Unassigned" style="background: #ffffff; border: 1px solid {{unBorder}}; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-weight: 600; font-size: 18px">People without a department ({{unCount}})</div>
+        <sc-if value="{{unEmpty}}" hint-placeholder-val="{{ false }}">
+          <div style="font-size: 14px; color: #4b5563">Everyone is in a department.</div>
+        </sc-if>
+        <sc-for list="{{unassigned}}" as="p" hint-placeholder-count="2">
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+            <span style="font-size: 15px">{{p.name}}</span>
+            <select aria-label="{{p.aria}}" value="" onChange="{{p.assign}}" style="border: 1px solid #9ca3af; border-radius: 8px; padding: 8px 10px; font-size: 14px; min-height: 44px; background: #ffffff; font-family: inherit">
+              <option value="">Assign to&hellip;</option>
+              <sc-for list="{{p.options}}" as="o" hint-placeholder-count="3"><option value="{{o.id}}">{{o.label}}</option></sc-for>
+            </select>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const depts = s.depts || [
+      { id: 'it', name: 'IT', parent: '', head: 'sheryl', source: 'import', people: 0 },
+      { id: 'ops', name: 'Operational IT', parent: 'it', head: 'scott', source: 'import', people: 6 },
+      { id: 'cs', name: 'Customer Service', parent: 'ops', head: 'kate', source: 'import', people: 9 },
+      { id: 'dev', name: 'Help Desk', parent: 'cs', head: 'kate', source: 'import', people: 3 }
+    ];
+    const unassigned = s.unassigned || ['Jordan Ellis', 'Priya Nair', 'Sam Okafor'];
+    const newName = s.newName || '';
+    const heads = [['sheryl', 'Sheryl Nelson'], ['scott', 'Scott'], ['kate', 'Kate Brenner'], ['', 'No head yet']];
+
+    const kids = (id) => depts.filter((d) => d.parent === id);
+    const below = (id) => kids(id).reduce((a, k) => a.concat([k.id], below(k.id)), []);
+    const rollPeople = (id) => depts.find((d) => d.id === id).people + below(id).reduce((n, k) => n + depts.find((d) => d.id === k).people, 0);
+
+    const order = [];
+    const walk = (parent, depth) => kids(parent).forEach((d) => { order.push({ d, depth }); walk(d.id, depth + 1); });
+    walk('', 0);
+
+    const rows = order.map(({ d, depth }) => {
+      const bad = [d.id].concat(below(d.id));
+      return {
+        name: d.name, people: rollPeople(d.id),
+        indent: (depth * 28) + 'px', accent: depth === 0 ? '#005CB9' : '#9ca3af',
+        sourceLabel: d.source === 'import' ? 'Imported' : 'Added by hand',
+        chipBg: d.source === 'import' ? '#e5e7eb' : '#e8f1fb', chipFg: d.source === 'import' ? '#374151' : '#034D8A',
+        headId: 'head-' + d.id, parentId: 'parent-' + d.id,
+        head: d.head, headOptions: heads.map((h) => ({ id: h[0], label: h[1] })),
+        setHead: (e) => this.setState({ depts: depts.map((x) => x.id === d.id ? Object.assign({}, x, { head: e.target.value, source: 'manual' }) : x) }),
+        parent: d.parent,
+        parentOptions: [{ id: '', label: 'Top level' }].concat(depts.filter((x) => bad.indexOf(x.id) < 0).map((x) => ({ id: x.id, label: x.name }))),
+        setParent: (e) => this.setState({ depts: depts.map((x) => x.id === d.id ? Object.assign({}, x, { parent: e.target.value, source: 'manual' }) : x) })
+      };
+    });
+
+    const un = unassigned.map((name) => ({
+      name, aria: 'Assign ' + name + ' to a department',
+      options: depts.filter((d) => kids(d.id).length === 0).map((d) => ({ id: d.id, label: d.name })),
+      assign: (e) => {
+        const to = e.target.value;
+        if (!to) return;
+        this.setState({
+          unassigned: unassigned.filter((n) => n !== name),
+          depts: depts.map((x) => x.id === to ? Object.assign({}, x, { people: x.people + 1 }) : x)
+        });
+      }
+    }));
+
+    return {
+      nav: ['My goals', 'My reviews', 'Launch reviews', 'Questions & cycles', 'Departments'].map((l) => ({
+        label: l, color: l === 'Departments' ? '#005CB9' : '#4b5563',
+        bg: l === 'Departments' ? 'rgba(0,92,185,0.08)' : 'transparent',
+        border: l === 'Departments' ? '#005CB9' : 'transparent', weight: l === 'Departments' ? '600' : '400'
+      })),
+      rows, newName,
+      setNewName: (e) => this.setState({ newName: e.target.value }),
+      addDisabled: !newName.trim(),
+      addBg: newName.trim() ? '#005CB9' : '#6b7280',
+      addDept: () => {
+        if (!newName.trim()) return;
+        this.setState({ depts: depts.concat([{ id: 'n' + depts.length, name: newName.trim(), parent: 'it', head: '', source: 'manual', people: 0 }]), newName: '' });
+      },
+      unassigned: un, unCount: un.length, unEmpty: un.length === 0,
+      unBorder: un.length ? '#ffb71b' : '#e5e7eb'
+    };
+  }
+}
+</script>
+</body>
+</html>
