@@ -1,3 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Official SIL brand colors, from the SIL Brand Resource Center:
+     https://sites.google.com/sil.org/brand-resource-center/branding/visual-brand */
+  --color-brand: #005CB9; /* SIL Blue */
+  --color-brand-dark: #034D8A; /* SIL Darker Blue */
+  --color-brand-accent: #FF6B00; /* SIL Orange */
+
+  --color-sil-blue: #005CB9;
+  --color-sil-light-blue: #00A7E1;
+  --color-sil-violet: #93358D;
+  --color-sil-red: #D52227;
+  --color-sil-orange: #FF6B00;
+  --color-sil-green: #509E2F;
+  --color-sil-yellow: #FFB71B;
+  --color-sil-gray: #666666;
+
+  /* SIL brand typography: Source Sans 3 for body/UI (default sans),
+     Playfair Display reserved for headlines — use `font-display`. */
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", ui-serif, Georgia, serif;
+}
