@@ -59,7 +59,8 @@ export default function TeamPersonGoals() {
             <div className="flex justify-between gap-3 flex-wrap items-start">
               <div className="min-w-0">
                 <div className={`font-semibold text-[17px] ${g.status === 'cancelled' ? 'text-gray-600' : ''}`}>{g.title}</div>
-                <div className="text-sm text-gray-600">{g.success_measure} · {fiscalYearLabel(g.fiscal_year)}</div>
+                <div className="text-sm text-gray-600">{fiscalYearLabel(g.fiscal_year)}</div>
+                {g.description && <p className="text-sm text-gray-700 mt-1">{g.description}</p>}
               </div>
               <span className="bg-gray-100 text-gray-700 text-xs font-semibold rounded-full px-2.5 py-0.5 whitespace-nowrap">{g.status}</span>
             </div>

@@ -37,15 +37,12 @@ export async function listCheckins(goalId) {
   return data
 }
 
-export async function createGoal(ownerEmail, { title, fiscalYear, successMeasure, description, targetValue, unit }) {
+export async function createGoal(ownerEmail, { title, fiscalYear, description }) {
   const { data, error } = await supabase.from('rev_goals').insert({
     owner_email: ownerEmail.toLowerCase(),
     fiscal_year: fiscalYear,
     title,
-    success_measure: successMeasure || null,
     description: description || null,
-    target_value: targetValue || null,
-    unit: unit || null,
   }).select().single()
   if (error) throw error
   return data

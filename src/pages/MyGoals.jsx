@@ -121,7 +121,8 @@ export default function MyGoals() {
             <div className="flex justify-between gap-3 flex-wrap items-start">
               <div className="min-w-0">
                 <div className={`font-semibold text-[17px] ${g.status === 'cancelled' ? 'text-gray-600' : ''}`}>{g.title}</div>
-                <div className="text-sm text-gray-600">{g.success_measure} · {fiscalYearLabel(g.fiscal_year)}</div>
+                <div className="text-sm text-gray-600">{fiscalYearLabel(g.fiscal_year)}</div>
+                {g.description && <p className="text-sm text-gray-700 mt-1">{g.description}</p>}
               </div>
               <span className="bg-gray-100 text-gray-700 text-xs font-semibold rounded-full px-2.5 py-0.5 whitespace-nowrap">{g.status}</span>
             </div>
@@ -175,14 +176,11 @@ export default function MyGoals() {
 
 function AddGoalForm({ defaultFiscalYear, saving, onSave, onCancel }) {
   const [title, setTitle] = useState('')
-  const [successMeasure, setSuccessMeasure] = useState('')
   const [description, setDescription] = useState('')
-  const [targetValue, setTargetValue] = useState('')
-  const [unit, setUnit] = useState('')
   const [fiscalYear, setFiscalYear] = useState(defaultFiscalYear)
 
   return (
-    <form onSubmit={e => { e.preventDefault(); onSave({ title, successMeasure, description, targetValue: targetValue ? Number(targetValue) : null, unit, fiscalYear }) }}
+    <form onSubmit={e => { e.preventDefault(); onSave({ title, description, fiscalYear }) }}
       className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex flex-col gap-3">
       <div className="font-semibold text-base">Add a goal</div>
       <label className="flex flex-col gap-1 text-sm font-semibold">
@@ -191,34 +189,17 @@ function AddGoalForm({ defaultFiscalYear, saving, onSave, onCancel }) {
           className="border border-gray-400 rounded-lg px-3 min-h-[44px] font-normal" />
       </label>
       <label className="flex flex-col gap-1 text-sm font-semibold">
-        What does success look like?
-        <input value={successMeasure} onChange={e => setSuccessMeasure(e.target.value)}
-          className="border border-gray-400 rounded-lg px-3 min-h-[44px] font-normal" />
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-semibold">
         Description <span className="font-normal text-gray-500">(optional)</span>
         <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)}
           className="border border-gray-400 rounded-lg p-3 font-normal resize-y" />
       </label>
-      <div className="flex flex-wrap gap-3">
-        <label className="flex flex-col gap-1 text-sm font-semibold flex-1 min-w-[140px]">
-          Target value <span className="font-normal text-gray-500">(optional)</span>
-          <input type="number" value={targetValue} onChange={e => setTargetValue(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] font-normal" />
-        </label>
-        <label className="flex flex-col gap-1 text-sm font-semibold flex-1 min-w-[140px]">
-          Unit <span className="font-normal text-gray-500">(optional)</span>
-          <input value={unit} onChange={e => setUnit(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] font-normal" />
-        </label>
-        <label className="flex flex-col gap-1 text-sm font-semibold flex-1 min-w-[140px]">
-          Fiscal year
-          <select value={fiscalYear} onChange={e => setFiscalYear(Number(e.target.value))}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal">
-            {[defaultFiscalYear, defaultFiscalYear - 1, defaultFiscalYear - 2].map(y => <option key={y} value={y}>FY{y}</option>)}
-          </select>
-        </label>
-      </div>
+      <label className="flex flex-col gap-1 text-sm font-semibold max-w-[200px]">
+        Fiscal year
+        <select value={fiscalYear} onChange={e => setFiscalYear(Number(e.target.value))}
+          className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal">
+          {[defaultFiscalYear, defaultFiscalYear - 1, defaultFiscalYear - 2].map(y => <option key={y} value={y}>FY{y}</option>)}
+        </select>
+      </label>
       <div className="flex gap-2 flex-wrap">
         <button type="submit" disabled={saving || !title.trim()}
           className="bg-brand text-white rounded-lg px-4 min-h-[44px] text-sm font-semibold disabled:opacity-60">
