@@ -4,6 +4,8 @@ import AuthCallback from './pages/AuthCallback'
 import MyGoals from './pages/MyGoals'
 import MyReviews from './pages/MyReviews'
 import Team from './pages/Team'
+import TeamManagerReview from './pages/TeamManagerReview'
+import TeamPersonGoals from './pages/TeamPersonGoals'
 import LaunchReviews from './pages/LaunchReviews'
 import AdminQuestions from './pages/admin/Questions'
 import AdminDepartments from './pages/admin/Departments'
@@ -18,6 +20,8 @@ export default function App() {
       <Route path="/goals" element={<RequireAuth><MyGoals /></RequireAuth>} />
       <Route path="/reviews" element={<RequireAuth><MyReviews /></RequireAuth>} />
       <Route path="/team" element={<RequireAuth><Team /></RequireAuth>} />
+      <Route path="/team/:email/review/:reviewId" element={<RequireAuth><TeamManagerReview /></RequireAuth>} />
+      <Route path="/team/:email/goals" element={<RequireAuth><TeamPersonGoals /></RequireAuth>} />
       <Route path="/launch" element={<RequireAuth><LaunchReviews /></RequireAuth>} />
       <Route path="/admin/questions" element={<RequireAuth><AdminQuestions /></RequireAuth>} />
       <Route path="/admin/departments" element={<RequireAuth><AdminDepartments /></RequireAuth>} />

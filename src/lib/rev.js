@@ -20,22 +20,75 @@ export async function myHeadedDepartments(email) {
   return data
 }
 
-export async function listGoals({ fiscalYear, status } = {}) {
+export async function listGoals({ fiscalYear, status, ownerEmail } = {}) {
   let q = supabase.from('rev_goals').select('*').order('created_at', { ascending: false })
   if (fiscalYear) q = q.eq('fiscal_year', fiscalYear)
   if (status && status !== 'all') q = q.eq('status', status)
+  if (ownerEmail) q = q.eq('owner_email', ownerEmail.toLowerCase())
   const { data, error } = await q
+  if (error) throw error
+  return data
+}
+
+export async function listCheckins(goalId) {
+  const { data, error } = await supabase
+    .from('rev_checkins').select('*').eq('goal_id', goalId).order('period_month')
   if (error) throw error
   return data
 }
 
 export const cancelGoal = (goalId, reason) => rpc('rev_cancel_goal', { p_goal_id: goalId, p_reason: reason })
 
+// RLS-filtered: only returns reviews where the caller is the employee, the
+// snapshot manager (once submitted), or an admin. Used to attach review ids
+// to rev_team_status's status-only rows for the ones the caller can open.
+export async function listReviewIds() {
+  const { data, error } = await supabase
+    .from('rev_reviews').select('id, employee_email, kind, period_year, period_quarter, status')
+  if (error) throw error
+  return data
+}
+
+export async function getReview(reviewId) {
+  const { data, error } = await supabase.from('rev_reviews').select('*').eq('id', reviewId).single()
+  if (error) throw error
+  return data
+}
+
+export async function listAnswers(reviewId) {
+  const { data, error } = await supabase.from('rev_answers').select('*').eq('review_id', reviewId)
+  if (error) throw error
+  return data
+}
+
+export async function listComments(reviewId) {
+  const { data, error } = await supabase.from('rev_comments').select('*').eq('review_id', reviewId)
+  if (error) throw error
+  return data
+}
+
+export async function upsertComment(reviewId, questionKey, body, authorEmail) {
+  const { error } = await supabase.from('rev_comments')
+    .upsert({ review_id: reviewId, question_key: questionKey, body, author_email: authorEmail.toLowerCase() },
+            { onConflict: 'review_id,question_key' })
+  if (error) throw error
+}
+
+export async function listProfiles(emails) {
+  const { data, error } = await supabase
+    .from('profiles').select('primary_email, display_name').in('primary_email', emails)
+  if (error) throw error
+  return data
+}
+
 export const submitReview = (reviewId) => rpc('rev_submit_review', { p_review_id: reviewId })
 export const sendForSignoff = (reviewId) => rpc('rev_send_for_signoff', { p_review_id: reviewId })
 export const signReview = (reviewId, agree, note) => rpc('rev_sign_review', { p_review_id: reviewId, p_agreed: agree, p_note: note })
 
 export const teamStatus = () => rpc('rev_team_status')
+export const requestNudge = (email) => rpc('rev_request_nudge', { p_employee_email: email })
+export const teamCheckinStatus = (periodMonth) => rpc('rev_team_checkin_status', { p_period_month: periodMonth })
+export const teamLastNudge = () => rpc('rev_team_last_nudge')
 
 // Launching: preview first (counts + who already launched), then launch with the edited email.
 export const launchPreview = (deptId, kind, year, quarter = null) =>
