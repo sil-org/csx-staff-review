@@ -1,0 +1,27 @@
+name: Deploy Edge Functions
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # Remove this job if you have no Supabase Edge Functions yet
+  # (see supabase/functions/README.md).
+  deploy-edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy Edge Functions
+        run: supabase functions deploy --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  # Frontend build + deploy is handled by AWS Amplify Hosting, connected
+  # directly to this repo — it builds and deploys automatically on every
+  # push to main using amplify.yml. No GitHub Actions job needed here.
