@@ -37,6 +37,32 @@ export async function listCheckins(goalId) {
   return data
 }
 
+export async function createGoal(ownerEmail, { title, fiscalYear, successMeasure, description, targetValue, unit }) {
+  const { data, error } = await supabase.from('rev_goals').insert({
+    owner_email: ownerEmail.toLowerCase(),
+    fiscal_year: fiscalYear,
+    title,
+    success_measure: successMeasure || null,
+    description: description || null,
+    target_value: targetValue || null,
+    unit: unit || null,
+  }).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function upsertCheckin(goalId, ownerEmail, periodMonth, { progressPct, status, note }) {
+  const { error } = await supabase.from('rev_checkins').upsert({
+    goal_id: goalId,
+    owner_email: ownerEmail.toLowerCase(),
+    period_month: periodMonth,
+    progress_pct: progressPct,
+    status,
+    note: note || null,
+  }, { onConflict: 'goal_id,period_month' })
+  if (error) throw error
+}
+
 export const cancelGoal = (goalId, reason) => rpc('rev_cancel_goal', { p_goal_id: goalId, p_reason: reason })
 
 // RLS-filtered: only returns reviews where the caller is the employee, the

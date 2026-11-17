@@ -7,3 +7,7 @@ export function fiscalYearOf(date = new Date()) {
 export function fiscalYearLabel(fy) {
   return `FY${fy} (Oct ${fy - 1} – Sep ${fy})`
 }
+
+export function currentPeriodMonth(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`
+}
