@@ -27,3 +27,14 @@ Quarterly / annual reviews plus personal goals and monthly check-ins, in the sha
 - Where department structure comes from (profiles table?) and how to import it.
 - Edge function to send launch emails (queue is `rev_reminder_log`, kind `launch`; sanitize the HTML there).
 - Scaffold the React app from `sil-app-template`.
+
+## Run it
+```
+cp .env.example .env     # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (shared GTIS Supabase project)
+npm install
+npm run dev
+npm run build            # the only automated frontend check
+```
+Run `supabase/01_rev_schema.sql` then `supabase/02_rev_departments.sql` in the Supabase SQL Editor first.
+The sign-in kernel (profiles, linked_accounts) already exists in the shared project, so the template's `schema.sql` is not included.
+Pages under `src/pages` are stubs except My goals (read-only list); each stub names the design file to port.
