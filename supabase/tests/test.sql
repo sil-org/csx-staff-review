@@ -260,13 +260,12 @@ end $$;
 
 -- ── F5. cancelling goals ────────────────────────────────────────────────────
 set request.jwt.claim.sub = :'bob';
-do $$ declare g uuid; e text;
+do $$ declare g uuid; g2 uuid; e text;
 begin
   select id into g from rev_goals where owner_email = 'bob@sil.org' limit 1;
-  begin perform rev_cancel_goal(g, '   '); exception when others then e := sqlerrm; end;
-  assert e like 'a reason is required%', 'cancel needs a reason: ' || coalesce(e, 'no error');
   perform rev_cancel_goal(g, 'Project was reassigned');
   assert (select status from rev_goals where id = g) = 'cancelled', 'goal cancelled';
+  assert (select cancel_reason from rev_goals where id = g) = 'Project was reassigned', 'reason stored when given';
   e := null;
   begin insert into rev_checkins (goal_id, owner_email, period_month, status) values (g, 'bob@sil.org', '2026-12-01', 'on_track'); exception when others then e := sqlerrm; end;
   assert e like 'this goal was cancelled%', 'no check-in on a cancelled goal: ' || coalesce(e, 'no error');
@@ -278,7 +277,12 @@ begin
   assert e is not null, 'cannot cancel twice';
   delete from rev_goals where id = g;
   assert (select count(*) from rev_goals) = 1, 'goals cannot be deleted';
-  raise notice 'F5 ok: cancel needs a reason, freezes the goal, no delete';
+
+  insert into rev_goals (owner_email, fiscal_year, title) values ('bob@sil.org', 2027, 'No reason needed') returning id into g2;
+  perform rev_cancel_goal(g2, '   ');
+  assert (select status from rev_goals where id = g2) = 'cancelled', 'goal cancelled with no reason given';
+  assert (select cancel_reason from rev_goals where id = g2) is null, 'a blank reason is stored as null, not required';
+  raise notice 'F5 ok: cancel reason is optional, freezes the goal, no delete';
 end $$;
 
 set request.jwt.claim.sub = :'carol';
@@ -292,8 +296,10 @@ end $$;
 
 set request.jwt.claim.sub = :'kate';
 do $$ begin
-  assert (select status from rev_goals limit 1) = 'cancelled' and (select cancel_reason from rev_goals limit 1) = 'Project was reassigned', 'manager sees cancelled goal and reason';
-  raise notice 'F7 ok: manager still sees the cancelled goal with its reason';
+  assert (select cancel_reason from rev_goals where title = 'Ship v1') = 'Project was reassigned', 'manager sees cancelled goal and reason';
+  assert (select status from rev_goals where title = 'No reason needed') = 'cancelled'
+     and (select cancel_reason from rev_goals where title = 'No reason needed') is null, 'manager sees cancelled goal with no reason';
+  raise notice 'F7 ok: manager still sees cancelled goals, with or without a reason';
 end $$;
 
 -- ── G. nudges ───────────────────────────────────────────────────────────────

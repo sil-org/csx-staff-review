@@ -386,7 +386,7 @@ drop trigger if exists rev_block_cancelled on rev_checkins;
 create trigger rev_block_cancelled before insert or update on rev_checkins
   for each row execute function rev_block_cancelled();
 
--- Owner cancels one of their own active goals. A reason is required: the manager sees it.
+-- Owner cancels one of their own active goals. A reason is optional: if given, the manager sees it.
 create or replace function rev_cancel_goal(p_goal_id uuid, p_reason text)
 returns void language plpgsql security definer set search_path = public as $$
 declare
@@ -396,10 +396,9 @@ begin
   select * into g from rev_goals where id = p_goal_id for update;
   if not found or g.owner_email is distinct from v_me then raise exception 'goal not found' using errcode = '42501'; end if;
   if g.status <> 'active' then raise exception 'only an active goal can be cancelled'; end if;
-  if nullif(trim(p_reason), '') is null then raise exception 'a reason is required to cancel a goal'; end if;
 
   update rev_goals
-    set status = 'cancelled', cancelled_at = now(), cancel_reason = trim(p_reason)
+    set status = 'cancelled', cancelled_at = now(), cancel_reason = nullif(trim(p_reason), '')
     where id = g.id;
 end;
 $$;
@@ -584,6 +583,19 @@ begin
                           and r.period_year = p_year and coalesce(r.period_quarter, 0) = coalesce(p_quarter, 0)
   where pt.active;
 end;
+$$;
+
+-- Admin: every (kind, period) cycle that has reviews, newest first, with totals.
+-- There's no separate "cycle" table for a plain rev_open_cycle (no email, whole
+-- organization); this reads the history straight back out of rev_reviews.
+create or replace function rev_cycle_history()
+returns table (kind text, period_year int, period_quarter int, opened_at timestamptz, total int, locked int)
+language sql stable security definer set search_path = public as $$
+  select kind, period_year, period_quarter, min(created_at), count(*)::int, count(*) filter (where status = 'locked')::int
+  from rev_reviews
+  where rev_is_admin()
+  group by kind, period_year, period_quarter
+  order by period_year desc, period_quarter desc nulls last, min(created_at) desc
 $$;
 
 -- Admin: create a review for every active participant who is REQUIRED to have it (by hours).
@@ -843,7 +855,7 @@ revoke execute on function
   rev_me(), rev_is_admin(), rev_is_direct_manager_of(text),
   rev_can_read_review(uuid), rev_can_read_comments(uuid),
   rev_can_edit_answers(uuid), rev_can_comment(uuid),
-  rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_review_key(text, int),
+  rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_cycle_history(), rev_review_key(text, int),
   rev_send_for_signoff(uuid), rev_sign_review(uuid, boolean, text), rev_compute_hash(uuid),
   rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(),
   rev_request_nudge(text)
@@ -855,7 +867,7 @@ grant execute on function
   rev_me(), rev_is_admin(), rev_is_direct_manager_of(text),
   rev_can_read_review(uuid), rev_can_read_comments(uuid),
   rev_can_edit_answers(uuid), rev_can_comment(uuid),
-  rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_review_key(text, int),
+  rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_cycle_history(), rev_review_key(text, int),
   rev_send_for_signoff(uuid), rev_sign_review(uuid, boolean, text),
   rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(),
   rev_request_nudge(text)

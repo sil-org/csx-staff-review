@@ -123,3 +123,140 @@ export const departmentReport = (deptId, kind, year, quarter = null) =>
   rpc('rev_department_report', { p_dept: deptId, p_kind: kind, p_year: year, p_quarter: quarter })
 export const departmentStatus = (deptId, kind, year, quarter = null) =>
   rpc('rev_department_status', { p_dept: deptId, p_kind: kind, p_year: year, p_quarter: quarter })
+
+// Questions and templates: admin-only writes are enforced by RLS on the tables
+// themselves (rev_templates/rev_questions "admin write" policies), so these go
+// straight to the tables rather than through an RPC.
+export async function activeTemplate(kind) {
+  const { data, error } = await supabase
+    .from('rev_templates').select('*').eq('kind', kind).eq('is_active', true).maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function createTemplate(kind, name, createdBy) {
+  const { data, error } = await supabase.from('rev_templates')
+    .insert({ kind, name, is_active: true, created_by: createdBy.toLowerCase() })
+    .select().single()
+  if (error) throw error
+  return data
+}
+
+export async function listQuestions(templateId) {
+  const { data, error } = await supabase
+    .from('rev_questions').select('*').eq('template_id', templateId).order('position')
+  if (error) throw error
+  return data
+}
+
+// Replaces the whole question list for a template in one request: removedIds are
+// deleted, then every remaining question is upserted with its position recomputed
+// from array order. rev_questions_position_uq is deferred to the end of the
+// transaction, so positions can be reshuffled without a temporary collision.
+export async function saveQuestions(templateId, questions, removedIds) {
+  if (removedIds.length > 0) {
+    const { error } = await supabase.from('rev_questions').delete().in('id', removedIds)
+    if (error) throw error
+  }
+  if (questions.length > 0) {
+    const rows = questions.map((q, i) => ({
+      id: q.id,
+      template_id: templateId,
+      position: i + 1,
+      prompt: q.prompt.trim(),
+      type: q.type,
+      required: q.required,
+      options: q.type === 'select' ? q.options : null,
+      worker_types: q.worker_types,
+    }))
+    const { error } = await supabase.from('rev_questions').upsert(rows, { onConflict: 'id' })
+    if (error) throw error
+  }
+}
+
+// Cycles: opening a cycle (whole organization, no email) is admin-only and
+// separate from a department head's rev_launch_cycle (which also sends email).
+export const cyclePreview = (kind, year, quarter = null) =>
+  rpc('rev_cycle_preview', { p_kind: kind, p_year: year, p_quarter: quarter })
+export const openCycle = (kind, year, quarter = null) =>
+  rpc('rev_open_cycle', { p_kind: kind, p_year: year, p_quarter: quarter })
+export const cycleHistory = () => rpc('rev_cycle_history')
+
+export async function listRequiredReviews() {
+  const { data, error } = await supabase.from('rev_required_reviews').select('*')
+  if (error) throw error
+  return data
+}
+
+export async function setRequiredReview(hours, review, required) {
+  const { error } = await supabase.from('rev_required_reviews')
+    .upsert({ hours, review, required }, { onConflict: 'hours,review' })
+  if (error) throw error
+}
+
+export async function getSettings() {
+  const { data, error } = await supabase.from('rev_settings').select('*').eq('id', 1).single()
+  if (error) throw error
+  return data
+}
+
+export async function updateSettings(fields) {
+  const { error } = await supabase.from('rev_settings').update(fields).eq('id', 1)
+  if (error) throw error
+}
+
+// Participants: who gets a review at all. No FK to profiles (someone can be added
+// before their directory profile exists), so pair with listProfiles for display names.
+export async function listParticipants() {
+  const { data, error } = await supabase
+    .from('rev_participants').select('*').eq('active', true).order('email')
+  if (error) throw error
+  return data
+}
+
+// Autocomplete source for "add by email". Strip characters that would break the
+// PostgREST or-filter syntax rather than the usual SQL-injection concern (ilike
+// patterns are parameterized regardless).
+export async function searchProfiles(query, limit = 8) {
+  const q = query.trim().replace(/[,()]/g, '')
+  if (q.length < 2) return []
+  const { data, error } = await supabase
+    .from('profiles').select('primary_email, display_name, manager_email')
+    .or(`display_name.ilike.%${q}%,primary_email.ilike.%${q}%`)
+    .limit(limit)
+  if (error) throw error
+  return data
+}
+
+export async function findProfile(email) {
+  const { data, error } = await supabase
+    .from('profiles').select('primary_email, display_name, manager_email')
+    .eq('primary_email', email.toLowerCase()).maybeSingle()
+  if (error) throw error
+  return data
+}
+
+// Upsert so re-adding someone who was previously removed (active = false) just
+// reactivates them instead of erroring on the email primary key.
+export async function addParticipant(email, { hours, workerType }, addedBy) {
+  const { data, error } = await supabase.from('rev_participants')
+    .upsert({ email: email.toLowerCase(), hours, worker_type: workerType, active: true, added_by: addedBy.toLowerCase() }, { onConflict: 'email' })
+    .select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateParticipant(email, { hours, workerType } = {}) {
+  const patch = {}
+  if (hours) patch.hours = hours
+  if (workerType) patch.worker_type = workerType
+  const { error } = await supabase.from('rev_participants').update(patch).eq('email', email.toLowerCase())
+  if (error) throw error
+}
+
+// Participants are deactivated, not deleted: rev_required_reviews/rev_reviews logic
+// and history should still make sense if someone is re-added later.
+export async function removeParticipant(email) {
+  const { error } = await supabase.from('rev_participants').update({ active: false }).eq('email', email.toLowerCase())
+  if (error) throw error
+}

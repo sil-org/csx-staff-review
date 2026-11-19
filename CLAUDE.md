@@ -13,7 +13,7 @@ and how to run it; read it first.
 
 ## Rules to preserve
 - Submitting a review is final: no send-back. Locked reviews are immutable (triggers).
-- Goals are cancelled with a reason, never deleted. Fiscal year starts October 1 (FY2027 = Oct 2026 - Sep 2027).
+- Goals are cancelled, never deleted; a reason is optional. Fiscal year starts October 1 (FY2027 = Oct 2026 - Sep 2027).
 - Hours (full/part-time) decide required reviews; worker type (paid/seconded/volunteer) decides which questions apply.
 - Departments are a tree with one head. Heads launch for their department and below; a review can only be launched once per person.
   Heads read COMPLETED reviews only for people directly in their department; higher heads see status only.

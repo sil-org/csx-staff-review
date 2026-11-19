@@ -15,7 +15,7 @@ Quarterly / annual reviews plus personal goals and monthly check-ins, in the sha
 ## Rules decided so far
 - Employee fills out first; **submitting is final (no send-back)**. Manager responds beside each answer in the same form as the
   question type. Employee signs off (agree / disagree + note). Record is then locked and immutable.
-- Goals are visible to the employee and direct manager; monthly check-ins live in the goal card; goals can be cancelled (reason required), never deleted.
+- Goals are visible to the employee and direct manager; monthly check-ins live in the goal card; goals can be cancelled (reason optional), never deleted.
 - Fiscal year starts **October 1**; FY2027 = Oct 2026 - Sep 2027.
 - Each person is full-time/part-time and paid/seconded/volunteer. Hours decide which reviews are required
   (default: full-time Q1-Q3 + annual, Q4 when enabled; part-time annual only). Worker type decides which questions apply.
