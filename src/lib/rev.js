@@ -124,6 +124,39 @@ export const departmentReport = (deptId, kind, year, quarter = null) =>
 export const departmentStatus = (deptId, kind, year, quarter = null) =>
   rpc('rev_department_status', { p_dept: deptId, p_kind: kind, p_year: year, p_quarter: quarter })
 
+// Departments: a tree with one head each. Only super admins can write here —
+// enforced by RLS on rev_departments and the rev_guard_participant_dept trigger
+// on rev_participants.department_id, not just by hiding the page.
+export async function listDepartments() {
+  const { data, error } = await supabase
+    .from('rev_departments').select('id, name, parent_id, head_email, source').order('name')
+  if (error) throw error
+  return data
+}
+
+export async function createDepartment(name, parentId) {
+  const { data, error } = await supabase.from('rev_departments')
+    .insert({ name: name.trim(), parent_id: parentId || null, source: 'manual' })
+    .select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateDepartment(id, { name, parentId, headEmail } = {}) {
+  const patch = {}
+  if (name !== undefined) patch.name = name.trim()
+  if (parentId !== undefined) patch.parent_id = parentId || null
+  if (headEmail !== undefined) patch.head_email = headEmail ? headEmail.toLowerCase() : null
+  const { error } = await supabase.from('rev_departments').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+export async function assignParticipantDepartment(email, departmentId) {
+  const { error } = await supabase.from('rev_participants')
+    .update({ department_id: departmentId || null }).eq('email', email.toLowerCase())
+  if (error) throw error
+}
+
 // Questions and templates: admin-only writes are enforced by RLS on the tables
 // themselves (rev_templates/rev_questions "admin write" policies), so these go
 // straight to the tables rather than through an RPC.

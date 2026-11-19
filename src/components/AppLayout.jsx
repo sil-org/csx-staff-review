@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { signOut } from '../lib/auth'
 
 // Left sidebar shell for apps with more than one or two pages. `links` is:
-//   [{ to?, label, icon: LucideIcon, adminOnly?, badge?, children?: [{to,label}] }]
+//   [{ to?, label, icon: LucideIcon, adminOnly?, badge?, children?: [{to,label,icon?}] }]
 // A link with `children` renders as an expandable section — expanded
 // automatically whenever the current route is the parent or one of its
 // children (no manual collapse state to manage). A parent with no `to`
@@ -102,19 +102,23 @@ export default function AppLayout({ appName, links, children }) {
 
                 {link.children?.length > 0 && expanded && (
                   <div className="flex flex-col">
-                    {link.children.map(child => (
-                      <Link
-                        key={child.to}
-                        to={child.to}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-2 pl-10 pr-4 py-2 text-[13px] border-l-[3px] transition-colors
-                          ${isActive(child.to)
-                            ? 'border-brand text-brand font-medium'
-                            : 'border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
-                      >
-                        <span className="truncate">{child.label}</span>
-                      </Link>
-                    ))}
+                    {link.children.map(child => {
+                      const ChildIcon = child.icon
+                      return (
+                        <Link
+                          key={child.to}
+                          to={child.to}
+                          onClick={() => setMobileOpen(false)}
+                          className={`flex items-center gap-2 pl-10 pr-4 py-2 text-[13px] border-l-[3px] transition-colors
+                            ${isActive(child.to)
+                              ? 'border-brand text-brand font-medium'
+                              : 'border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                        >
+                          {ChildIcon && <ChildIcon size={14} className="flex-shrink-0" />}
+                          <span className="truncate">{child.label}</span>
+                        </Link>
+                      )
+                    })}
                   </div>
                 )}
               </div>
