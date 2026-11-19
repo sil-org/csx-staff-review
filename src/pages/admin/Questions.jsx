@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { GripVertical } from 'lucide-react'
 import Page, { Todo } from '../../components/Page'
 import { useAuth } from '../../context/AuthContext'
 import { useRev } from '../../context/RevContext'
@@ -218,17 +219,52 @@ export default function AdminQuestions() {
     setSavedMessage('')
   }
 
-  function move(index, dir) {
+  function move(from, to) {
+    if (from < 0 || to < 0 || to >= questions.length || from === to) return
     setQuestions(qs => {
-      const to = index + dir
-      if (to < 0 || to >= qs.length) return qs
       const next = qs.slice()
-      const [item] = next.splice(index, 1)
+      const [item] = next.splice(from, 1)
       next.splice(to, 0, item)
       return next
     })
     setDirty(true)
     setSavedMessage('')
+  }
+
+  // Drag-to-reorder: the handle captures the pointer on pointerdown, so moves keep
+  // arriving even once the finger/cursor leaves it. pointermove walks the element
+  // under the pointer back to its question card (data-qid) to find what it's over.
+  const [dragId, setDragId] = useState(null)
+  const [overId, setOverId] = useState(null)
+
+  function handleDragStart(e, id) {
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* unsupported */ }
+    setDragId(id)
+    setOverId(null)
+  }
+  function handleDragMove(e, id) {
+    if (dragId !== id) return
+    const el = document.elementFromPoint(e.clientX, e.clientY)
+    const row = el?.closest?.('[data-qid]')
+    const target = row ? row.getAttribute('data-qid') : null
+    if (target !== overId) setOverId(target)
+  }
+  function handleDragEnd(e, id) {
+    if (dragId !== id) return
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* unsupported */ }
+    const from = questions.findIndex(q => q.id === id)
+    const to = questions.findIndex(q => q.id === overId)
+    setDragId(null)
+    setOverId(null)
+    if (to >= 0) move(from, to)
+  }
+  function handleDragCancel() {
+    setDragId(null)
+    setOverId(null)
+  }
+  function handleHandleKeyDown(e, index) {
+    if (e.key === 'ArrowUp') { e.preventDefault(); move(index, index - 1) }
+    if (e.key === 'ArrowDown') { e.preventDefault(); move(index, index + 1) }
   }
 
   function addQuestion() {
@@ -303,23 +339,35 @@ export default function AdminQuestions() {
           <span className="bg-green-100 text-green-800 text-xs font-semibold rounded-full px-2.5 py-0.5">Active template</span>
         </div>
         <p className="text-sm text-gray-600 mb-4">
-          Changes apply to reviews opened after you save. Reviews already open keep the questions they started with.
+          Drag a question by its handle to reorder — it works with a finger or a mouse, or press the up/down
+          arrow keys while the handle is focused. Changes apply to reviews opened after you save. Reviews
+          already open keep the questions they started with.
         </p>
 
         {questions === null && !error && <p className="text-gray-500">Loading…</p>}
         {questions && questions.length === 0 && <Todo>No questions yet. Add one below.</Todo>}
 
         <div className="flex flex-col gap-3">
-          {(questions || []).map((q, i) => (
-            <QuestionCard key={q.id} q={q} index={i} count={questions.length}
+          {(questions || []).map((q, i) => {
+            const dragIndex = questions.findIndex(x => x.id === dragId)
+            const isOver = !!dragId && dragId !== q.id && overId === q.id
+            return (
+            <QuestionCard key={q.id} q={q} index={i}
               editing={editingId === q.id}
+              dragging={dragId === q.id}
+              overIndicator={isOver ? (dragIndex < i ? 'below' : 'above') : null}
               onToggleEdit={() => setEditingId(editingId === q.id ? null : q.id)}
-              onMove={dir => move(i, dir)}
+              onHandlePointerDown={e => handleDragStart(e, q.id)}
+              onHandlePointerMove={e => handleDragMove(e, q.id)}
+              onHandlePointerUp={e => handleDragEnd(e, q.id)}
+              onHandlePointerCancel={handleDragCancel}
+              onHandleKeyDown={e => handleHandleKeyDown(e, i)}
               onRemove={() => removeQuestion(q.id)}
               onPatch={fields => patch(q.id, fields)}
               onToggleWorkerType={key => toggleWorkerType(q, key)}
             />
-          ))}
+            )
+          })}
         </div>
 
         <div className="flex flex-wrap gap-3 items-center mt-4">
@@ -680,20 +728,28 @@ function AddParticipantForm({ onAdd }) {
   )
 }
 
-function QuestionCard({ q, index, count, editing, onToggleEdit, onMove, onRemove, onPatch, onToggleWorkerType }) {
+function QuestionCard({
+  q, index, editing, dragging, overIndicator, onToggleEdit,
+  onHandlePointerDown, onHandlePointerMove, onHandlePointerUp, onHandlePointerCancel, onHandleKeyDown,
+  onRemove, onPatch, onToggleWorkerType,
+}) {
   const typeLabel = TYPES.find(([k]) => k === q.type)?.[1] ?? q.type
   const restricted = q.worker_types.length < ALL_WORKER_TYPES.length
   const audienceLabel = 'Asked of: ' + q.worker_types.map(k => WORKER_TYPES.find(([wk]) => wk === k)[1]).join(', ')
+  const boxShadow = overIndicator === 'below' ? '0 3px 0 0 #005CB9' : overIndicator === 'above' ? '0 -3px 0 0 #005CB9' : 'none'
 
   return (
-    <div className={`border rounded-xl p-3.5 flex flex-col gap-3 ${editing ? 'border-brand' : 'border-gray-200'}`}>
+    <div data-qid={q.id} style={{ opacity: dragging ? 0.45 : 1, boxShadow }}
+      className={`border rounded-xl p-3.5 flex flex-col gap-3 ${overIndicator || editing ? 'border-brand' : 'border-gray-200'}`}>
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-col gap-0.5">
-          <button type="button" disabled={index === 0} onClick={() => onMove(-1)} aria-label={`Move question ${index + 1} up`}
-            className="w-8 h-5 flex items-center justify-center text-gray-600 disabled:opacity-30">▲</button>
-          <button type="button" disabled={index === count - 1} onClick={() => onMove(1)} aria-label={`Move question ${index + 1} down`}
-            className="w-8 h-5 flex items-center justify-center text-gray-600 disabled:opacity-30">▼</button>
-        </div>
+        <button type="button"
+          aria-label={`Reorder question ${index + 1}. Drag, or press the up and down arrow keys.`}
+          title="Drag to reorder"
+          onPointerDown={onHandlePointerDown} onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp} onPointerCancel={onHandlePointerCancel} onKeyDown={onHandleKeyDown}
+          className="w-11 h-11 flex-shrink-0 flex items-center justify-center text-gray-600 bg-gray-100 border border-gray-300 rounded-lg cursor-grab touch-none select-none">
+          <GripVertical size={20} />
+        </button>
         <span className="font-bold text-gray-600 w-5">{index + 1}</span>
         <div className="flex-1 min-w-[200px]">
           <div className="text-[15px] font-semibold">
