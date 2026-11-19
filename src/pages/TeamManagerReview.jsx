@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import Page from '../components/Page'
 import { useAuth } from '../context/AuthContext'
-import { getReview, listAnswers, listComments, upsertComment, sendForSignoff, listGoals, listCheckins } from '../lib/rev'
+import { getReview, listAnswers, listComments, upsertComment, sendForSignoff, listGoals, listCheckins, listPersonReviews } from '../lib/rev'
 import { periodLabel, statusLabel } from '../lib/reviewLabels'
 
 export default function TeamManagerReview() {
@@ -16,6 +16,7 @@ export default function TeamManagerReview() {
   const [commentByKey, setCommentByKey] = useState({})
   const [goals, setGoals] = useState(null)
   const [goalsError, setGoalsError] = useState(false)
+  const [personReviews, setPersonReviews] = useState(null)
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [savingKey, setSavingKey] = useState(null)
@@ -53,6 +54,15 @@ export default function TeamManagerReview() {
     return () => { cancelled = true }
   }, [email])
 
+  useEffect(() => {
+    let cancelled = false
+    setPersonReviews(null)
+    listPersonReviews(email)
+      .then(rows => { if (!cancelled) setPersonReviews(rows) })
+      .catch(() => { if (!cancelled) setPersonReviews([]) })
+    return () => { cancelled = true }
+  }, [email])
+
   const editable = review?.status === 'with_manager'
 
   async function saveComment(questionKey, body) {
@@ -78,22 +88,37 @@ export default function TeamManagerReview() {
     }
   }
 
-  if (error && !review) return <Page title="Review"><p role="alert" className="text-red-700">{error}</p></Page>
-  if (!review) return <Page title="Review"><p className="text-gray-500">Loading…</p></Page>
+  if (error && !review) return <Page title={displayName}><p role="alert" className="text-red-700">{error}</p></Page>
+  if (!review) return <Page title={displayName}><p className="text-gray-500">Loading…</p></Page>
 
   return (
     <Page
-      title={`${periodLabel(review.kind, review.period_year, review.period_quarter)} review: ${displayName}`}
+      title={displayName}
       subtitle={
         <>
-          <Link to="/team" className="text-sm">My team</Link> / {displayName} ·{' '}
+          <Link to="/team" className="text-sm">My team</Link> / {periodLabel(review.kind, review.period_year, review.period_quarter)} ·{' '}
           <span className="bg-blue-100 text-blue-900 text-xs font-semibold rounded-full px-2.5 py-0.5">{statusLabel(review.status)}</span>
         </>
       }
     >
       {error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
       <div className="flex flex-wrap gap-6 items-start">
-        <div className="flex-[999_1_520px] min-w-0 flex flex-col gap-4">
+        <nav aria-label={`${displayName}'s reviews`} className="flex-none w-full sm:w-48 flex flex-col gap-1">
+          {personReviews === null && <p className="text-sm text-gray-500">Loading…</p>}
+          {personReviews?.length === 0 && <p className="text-sm text-gray-500">No reviews yet.</p>}
+          {personReviews?.map(r => (
+            <Link key={r.id} to={`/team/${encodeURIComponent(email)}/review/${r.id}`} state={{ displayName }}
+              className={`flex flex-col gap-0.5 rounded-lg px-3 py-2 border-l-[3px] transition-colors
+                ${r.id === reviewId
+                  ? 'border-brand text-brand bg-brand/[0.08] font-semibold'
+                  : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
+              <span className="text-sm">{periodLabel(r.kind, r.period_year, r.period_quarter)}</span>
+              <span className="text-xs">{statusLabel(r.status)}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex-[999_1_480px] min-w-0 flex flex-col gap-4">
           {review.questions.map(q => (
             <section key={q.key} className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col gap-3">
               <h2 className="text-base font-semibold">{q.position}. {q.prompt}</h2>

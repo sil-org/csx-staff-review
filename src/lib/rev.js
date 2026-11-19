@@ -72,6 +72,17 @@ export async function listReviewIds() {
   return data
 }
 
+// All reviews for one person, RLS-filtered the same way as listReviewIds() (rev_can_read_review):
+// the left nav on a person's review page, so it naturally shows only what the viewer may read.
+export async function listPersonReviews(email) {
+  const { data, error } = await supabase
+    .from('rev_reviews').select('id, kind, period_year, period_quarter, status')
+    .eq('employee_email', email.toLowerCase())
+    .order('period_year', { ascending: false }).order('period_quarter', { ascending: false, nullsFirst: false })
+  if (error) throw error
+  return data
+}
+
 export async function getReview(reviewId) {
   const { data, error } = await supabase.from('rev_reviews').select('*').eq('id', reviewId).single()
   if (error) throw error

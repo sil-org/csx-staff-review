@@ -826,12 +826,14 @@ $$;
 -- caller's own tree, even for admins: this is a personal roster, not an
 -- org-wide view (that's rev_department_report/_status).
 create or replace function rev_team_roster()
-returns table (employee_email text, display_name text, manager_email text, is_direct boolean, is_participant boolean)
+returns table (employee_email text, display_name text, manager_email text, is_direct boolean,
+               is_participant boolean, hours text, worker_type text)
 language sql stable security definer set search_path = public as $$
   select lower(pr.primary_email), pr.display_name, lower(nullif(trim(pr.manager_email), '')),
          lower(nullif(trim(pr.manager_email), '')) = rev_me(),
-         exists(select 1 from rev_participants rp where rp.email = lower(pr.primary_email) and rp.active)
+         coalesce(rp.active, false), rp.hours, rp.worker_type
   from profiles pr
+  left join rev_participants rp on rp.email = lower(pr.primary_email)
   where current_profile_email() is not null
     and lower(pr.primary_email) in (select get_report_emails())
   order by pr.display_name

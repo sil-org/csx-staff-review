@@ -1,111 +1,118 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Briefcase, Handshake, Heart, Circle, MinusCircle, Clock, CheckCircle2, Bell, Target } from 'lucide-react'
 import Page, { Todo } from '../components/Page'
-import { useAuth } from '../context/AuthContext'
-import { teamStatus, teamRoster, teamCheckinStatus, teamLastNudge, listReviewIds, listProfiles, requestNudge } from '../lib/rev'
-import { periodLabel, statusLabel } from '../lib/reviewLabels'
+import { teamStatus, teamRoster, teamLastNudge, listReviewIds, listRequiredReviews, requestNudge } from '../lib/rev'
+import { fiscalYearOf, fiscalYearLabel } from '../lib/fiscal'
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
 
-function periodKey(kind, year, quarter) {
-  return `${kind}:${year}:${quarter ?? ''}`
-}
+const QUARTER_COLS = [
+  { key: 'q1', label: 'Q1', kind: 'quarterly', quarter: 1 },
+  { key: 'q2', label: 'Q2', kind: 'quarterly', quarter: 2 },
+  { key: 'q3', label: 'Q3', kind: 'quarterly', quarter: 3 },
+  { key: 'annual', label: 'Annual', kind: 'annual', quarter: null },
+]
+const STAFF_TYPES = [['paid', 'Paid', Briefcase], ['seconded', 'Supported', Handshake], ['volunteer', 'Volunteer', Heart]]
+const HOURS_TYPES = [['full_time', 'Full-time'], ['part_time', 'Part-time']]
+const STATUS_RANK = { na: 0, future: 1, draft: 2, with_manager: 3, awaiting_employee: 4, locked: 5 }
 
 export default function Team() {
-  const { profile } = useAuth()
-  const me = profile?.primary_email?.toLowerCase()
+  const currentFy = fiscalYearOf()
 
-  const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
+  const [statusRows, setStatusRows] = useState([])
+  const [reviewIds, setReviewIds] = useState([])
+  const [required, setRequired] = useState([])
+  const [nudges, setNudges] = useState([])
   const [error, setError] = useState('')
-  const [view, setView] = useState('team') // 'team' | 'direct'
-  const [period, setPeriod] = useState('all')
   const [remindError, setRemindError] = useState('')
 
-  useEffect(() => {
-    let cancelled = false
-    setRows(null)
+  const [view, setView] = useState('team') // 'team' | 'direct'
+  const [fy, setFy] = useState(currentFy)
+  const [hoursFilter, setHoursFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [sort, setSort] = useState({ key: 'name', dir: 'asc' })
+
+  function load() {
     setRoster(null)
-    Promise.all([teamStatus(), teamCheckinStatus(), teamLastNudge(), listReviewIds(), teamRoster()])
-      .then(async ([statusRows, checkins, nudges, reviewIds, rosterRows]) => {
-        const checkinByEmail = Object.fromEntries(checkins.map(c => [c.employee_email, c]))
-        const nudgeByEmail = Object.fromEntries(nudges.map(n => [n.employee_email, n.last_nudged_at]))
-        const idByKey = Object.fromEntries(
-          reviewIds.map(r => [periodKey(r.kind, r.period_year, r.period_quarter) + '|' + r.employee_email, r.id])
-        )
-        const managerEmails = [...new Set(statusRows.map(r => r.manager_email).filter(e => e && e !== me))]
-        let nameByEmail = {}
-        if (managerEmails.length > 0) {
-          try {
-            const profiles = await listProfiles(managerEmails)
-            nameByEmail = Object.fromEntries(profiles.map(p => [p.primary_email.toLowerCase(), p.display_name]))
-          } catch {
-            // Best-effort only -- fall back to showing the raw email below.
-          }
-        }
-
-        const merged = statusRows.map(r => {
-          const checkin = checkinByEmail[r.employee_email]
-          return {
-            employeeEmail: r.employee_email,
-            displayName: r.display_name,
-            managerEmail: r.manager_email,
-            managerName: r.manager_email === me ? 'You' : (nameByEmail[r.manager_email] || r.manager_email),
-            isDirect: r.manager_email === me,
-            kind: r.kind,
-            year: r.period_year,
-            quarter: r.period_quarter,
-            status: r.status,
-            reviewId: idByKey[periodKey(r.kind, r.period_year, r.period_quarter) + '|' + r.employee_email] || null,
-            activeGoals: checkin?.active_goals ?? null,
-            checkedIn: checkin?.checked_in ?? null,
-            lastNudgedAt: nudgeByEmail[r.employee_email] || null,
-          }
-        })
-        if (!cancelled) { setRows(merged); setRoster(rosterRows) }
+    setError('')
+    Promise.all([teamRoster(), teamStatus(), listReviewIds(), listRequiredReviews(), teamLastNudge()])
+      .then(([rosterRows, status, ids, req, nudgeRows]) => {
+        setRoster(rosterRows)
+        setStatusRows(status)
+        setReviewIds(ids)
+        setRequired(req)
+        setNudges(nudgeRows)
       })
-      .catch(e => { if (!cancelled) setError(e.message) })
-    return () => { cancelled = true }
-  }, [me])
+      .catch(e => setError(e.message))
+  }
 
-  const periods = useMemo(() => {
-    if (!rows) return []
-    const seen = new Map()
-    for (const r of rows) {
-      const key = periodKey(r.kind, r.year, r.quarter)
-      if (!seen.has(key)) seen.set(key, { key, kind: r.kind, year: r.year, quarter: r.quarter })
-    }
-    return [...seen.values()].sort((a, b) => b.year - a.year || (b.quarter ?? -1) - (a.quarter ?? -1))
-  }, [rows])
+  useEffect(load, [])
 
-  const rosterFiltered = useMemo(() => {
+  const requiredByKey = useMemo(
+    () => Object.fromEntries(required.map(r => [`${r.hours}:${r.review}`, r.required])),
+    [required],
+  )
+  const nudgeByEmail = useMemo(
+    () => Object.fromEntries(nudges.map(n => [n.employee_email, n.last_nudged_at])),
+    [nudges],
+  )
+  const reviewIndex = useMemo(() => {
+    const statusByKey = new Map()
+    for (const r of statusRows) statusByKey.set(`${r.employee_email}|${r.kind}|${r.period_year}|${r.period_quarter ?? ''}`, r.status)
+    const idByKey = new Map()
+    for (const r of reviewIds) idByKey.set(`${r.employee_email}|${r.kind}|${r.period_year}|${r.period_quarter ?? ''}`, r.id)
+    return { statusByKey, idByKey }
+  }, [statusRows, reviewIds])
+
+  function cellFor(person, col) {
+    const required_ = requiredByKey[`${person.hours}:${col.key}`]
+    if (!person.hours || !required_) return { state: 'na' }
+    const idx = `${person.employee_email}|${col.kind}|${fy}|${col.quarter ?? ''}`
+    const status = reviewIndex.statusByKey.get(idx)
+    if (!status) return { state: 'future' }
+    return { state: status, id: reviewIndex.idByKey.get(idx) || null }
+  }
+
+  const filteredRoster = useMemo(() => {
     if (!roster) return []
-    return view === 'direct' ? roster.filter(p => p.is_direct) : roster
-  }, [roster, view])
-
-  const filtered = useMemo(() => {
-    if (!rows) return []
-    return rows.filter(r => {
-      if (view === 'direct' && !r.isDirect) return false
-      if (period !== 'all' && periodKey(r.kind, r.year, r.quarter) !== period) return false
+    return roster.filter(p => {
+      if (view === 'direct' && !p.is_direct) return false
+      if (hoursFilter !== 'all' && p.hours !== hoursFilter) return false
+      if (typeFilter !== 'all' && p.worker_type !== typeFilter) return false
       return true
     })
-  }, [rows, view, period])
+  }, [roster, view, hoursFilter, typeFilter])
 
-  const tiles = useMemo(() => {
-    const counts = {}
-    for (const r of filtered) counts[r.status] = (counts[r.status] || 0) + 1
-    return ['draft', 'with_manager', 'awaiting_employee', 'locked'].map(status => ({
-      status, label: statusLabel(status), count: counts[status] || 0,
-    }))
-  }, [filtered])
+  const tableRows = useMemo(
+    () => filteredRoster.map(p => ({ ...p, cells: Object.fromEntries(QUARTER_COLS.map(col => [col.key, cellFor(p, col)])) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredRoster, requiredByKey, reviewIndex, fy],
+  )
+
+  const sorted = useMemo(() => {
+    const rows = tableRows.slice()
+    const dir = sort.dir === 'asc' ? 1 : -1
+    rows.sort((a, b) => {
+      if (sort.key === 'name') return dir * (a.display_name || a.employee_email).localeCompare(b.display_name || b.employee_email)
+      if (sort.key === 'hours') return dir * (a.hours || '').localeCompare(b.hours || '')
+      if (sort.key === 'worker_type') return dir * (a.worker_type || '').localeCompare(b.worker_type || '')
+      return dir * (STATUS_RANK[a.cells[sort.key].state] - STATUS_RANK[b.cells[sort.key].state])
+    })
+    return rows
+  }, [tableRows, sort])
+
+  function toggleSort(key) {
+    setSort(s => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }))
+  }
 
   async function handleRemind(email) {
     setRemindError('')
     try {
       const sent = await requestNudge(email)
       if (sent) {
-        setRows(prev => prev.map(r => r.employeeEmail === email ? { ...r, lastNudgedAt: new Date().toISOString() } : r))
+        setNudges(prev => [...prev.filter(n => n.employee_email !== email), { employee_email: email, last_nudged_at: new Date().toISOString() }])
       } else {
         setRemindError(`${email} was already reminded in the last 3 days.`)
       }
@@ -115,7 +122,7 @@ export default function Team() {
   }
 
   return (
-    <Page title="My team" subtitle={rows ? `${filtered.length} review${filtered.length === 1 ? '' : 's'}` : undefined}>
+    <Page title="My team" subtitle={roster ? `${sorted.length} ${sorted.length === 1 ? 'person' : 'people'} · ${fiscalYearLabel(fy)}` : undefined}>
       <div className="flex flex-wrap gap-3 items-end justify-between mb-4">
         <div role="group" aria-label="Show" className="flex gap-2 flex-wrap">
           {[['direct', 'Direct reports'], ['team', 'Whole team']].map(([key, label]) => (
@@ -125,100 +132,103 @@ export default function Team() {
             </button>
           ))}
         </div>
-        <label className="text-sm font-semibold text-gray-600 flex flex-col gap-1">
-          Period
-          <select value={period} onChange={e => setPeriod(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal text-base">
-            <option value="all">All history</option>
-            {periods.map(p => <option key={p.key} value={p.key}>{periodLabel(p.kind, p.year, p.quarter)}</option>)}
-          </select>
-        </label>
+        <div className="flex gap-3 items-end flex-wrap">
+          <label className="text-sm font-semibold text-gray-600 flex flex-col gap-1">
+            Fiscal year
+            <select value={fy} onChange={e => setFy(Number(e.target.value))}
+              className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal text-base">
+              {[currentFy, currentFy - 1, currentFy - 2].map(y => <option key={y} value={y}>FY{y}{y === currentFy ? ' (current)' : ''}</option>)}
+            </select>
+          </label>
+          <label className="text-sm font-semibold text-gray-600 flex flex-col gap-1">
+            Staff type
+            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+              className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal text-base">
+              <option value="all">All</option>
+              {STAFF_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select>
+          </label>
+          <label className="text-sm font-semibold text-gray-600 flex flex-col gap-1">
+            FTE
+            <select value={hoursFilter} onChange={e => setHoursFilter(e.target.value)}
+              className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal text-base">
+              <option value="all">All</option>
+              {HOURS_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+            </select>
+          </label>
+        </div>
       </div>
 
-      {error && <p role="alert" className="text-red-700">{error}</p>}
+      {error && <p role="alert" className="text-red-700 mb-3">{error}</p>}
       {remindError && <p role="alert" className="text-red-700 mb-3">{remindError}</p>}
-      {rows === null && !error && <p className="text-gray-500">Loading…</p>}
+      {roster === null && !error && <p className="text-gray-500">Loading…</p>}
 
-      {rows && (
+      {roster && (
         <>
-          <section aria-label="Your team" className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-            <h2 className="text-base font-semibold mb-2">
-              {view === 'direct' ? 'Direct reports' : 'Whole team'} ({rosterFiltered.length})
-            </h2>
-            {rosterFiltered.length === 0 ? (
-              <p className="text-sm text-gray-600 m-0">Nobody reports to you yet in the directory.</p>
-            ) : (
-              <ul className="flex flex-wrap gap-2">
-                {rosterFiltered.map(p => (
-                  <li key={p.employee_email}
-                    className="flex items-center gap-2 border border-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
-                    <span>{p.display_name || p.employee_email}</span>
-                    {!p.is_participant && (
-                      <span className="bg-amber-100 text-amber-800 text-xs font-semibold rounded-full px-2 py-0.5">Not in reviews yet</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="text-xs text-gray-600 mt-2 mb-0">
-              From the directory&rsquo;s reporting line. A review only shows below once someone&rsquo;s added as a
-              participant and a cycle is opened for them.
-            </p>
-          </section>
-
-          <div className="flex flex-wrap gap-3 mb-6">
-            {tiles.map(t => (
-              <div key={t.status} className="flex-1 min-w-[160px] bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
-                <span className="self-start bg-gray-100 text-gray-700 text-xs font-semibold rounded-full px-2.5 py-0.5">{t.label}</span>
-                <span className="text-4xl font-bold leading-none">{t.count}</span>
-              </div>
-            ))}
-          </div>
-
-          {filtered.length === 0 ? (
-            <Todo>No reviews match this filter.</Todo>
+          {sorted.length === 0 ? (
+            <Todo>Nobody matches this filter.</Todo>
           ) : (
             <div className="bg-white border border-gray-200 rounded-xl overflow-x-auto">
-              <table className="w-full min-w-[860px] text-sm">
+              <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="text-left bg-gray-50">
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-200">Person</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-200">Period</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-200">Reports to</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-200">Review</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-200">Goal check-ins</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-600 border-b border-gray-200">Action</th>
+                    <Th label="Name" sortKey="name" sort={sort} onSort={toggleSort} />
+                    <Th label="FTE" sortKey="hours" sort={sort} onSort={toggleSort} center />
+                    <Th label="Staff type" sortKey="worker_type" sort={sort} onSort={toggleSort} center />
+                    <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-600 border-b border-gray-200 text-center">Goals</th>
+                    {QUARTER_COLS.map(col => (
+                      <Th key={col.key} label={col.label} sortKey={col.key} sort={sort} onSort={toggleSort} center />
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(r => (
-                    <tr key={`${r.employeeEmail}:${periodKey(r.kind, r.year, r.quarter)}`}>
-                      <th scope="row" className="px-4 py-3 font-semibold text-left border-b border-gray-100">
-                        {r.isDirect
-                          ? <Link to={`/team/${encodeURIComponent(r.employeeEmail)}/goals`} state={{ displayName: r.displayName }}>{r.displayName}</Link>
-                          : <span>{r.displayName}</span>}
-                      </th>
-                      <td className="px-4 py-3 text-gray-600 border-b border-gray-100 whitespace-nowrap">{periodLabel(r.kind, r.year, r.quarter)}</td>
-                      <td className="px-4 py-3 text-gray-600 border-b border-gray-100">{r.managerName}</td>
-                      <td className="px-4 py-3 border-b border-gray-100">
-                        <span className="bg-gray-100 text-gray-700 text-xs font-semibold rounded-full px-2.5 py-0.5 whitespace-nowrap">{statusLabel(r.status)}</span>
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-100">
-                        {r.activeGoals === null ? '—' : `${r.checkedIn} of ${r.activeGoals}`}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-100">
-                        <RowAction row={r} onRemind={handleRemind} />
-                      </td>
-                    </tr>
-                  ))}
+                  {sorted.map(person => {
+                    const name = person.display_name || person.employee_email
+                    return (
+                      <tr key={person.employee_email}>
+                        <th scope="row" className="px-3 py-2 font-semibold text-left border-b border-gray-100 whitespace-nowrap">
+                          {person.is_direct
+                            ? <Link to={`/team/${encodeURIComponent(person.employee_email)}/goals`} state={{ displayName: name }}>{name}</Link>
+                            : <span>{name}</span>}
+                          {!person.is_participant && (
+                            <span className="ml-2 bg-amber-100 text-amber-800 text-[11px] font-semibold rounded-full px-2 py-0.5 align-middle whitespace-nowrap">
+                              Not in reviews yet
+                            </span>
+                          )}
+                        </th>
+                        <td className="px-3 py-2 border-b border-gray-100 text-center"><FteIcon hours={person.hours} /></td>
+                        <td className="px-3 py-2 border-b border-gray-100 text-center"><StaffTypeIcon workerType={person.worker_type} /></td>
+                        <td className="px-3 py-2 border-b border-gray-100 text-center"><GoalsCell person={person} name={name} /></td>
+                        {QUARTER_COLS.map(col => {
+                          const props = reviewCellProps(person, col, person.cells[col.key], name, nudgeByEmail, handleRemind)
+                          return <td key={col.key} className="px-3 py-2 border-b border-gray-100 text-center"><IconCell {...props} /></td>
+                        })}
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
           )}
+
+          <section aria-label="Icon legend" className="mt-4 bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-700">
+            <LegendItem icon={Circle} iconProps={{ fill: 'currentColor' }} label="Full-time" />
+            <LegendItem icon={Circle} label="Part-time" />
+            <LegendItem icon={Briefcase} label="Paid" />
+            <LegendItem icon={Handshake} label="Supported" />
+            <LegendItem icon={Heart} label="Volunteer" />
+            <LegendItem icon={MinusCircle} className="text-gray-300" label="Not applicable" />
+            <LegendItem icon={Circle} className="text-gray-300" label="Not opened yet" />
+            <LegendItem icon={Bell} className="text-amber-600" label="Draft — send a reminder" />
+            <LegendItem icon={Clock} className="text-amber-600" label="Waiting on you" />
+            <LegendItem icon={Clock} className="text-blue-600" label="Waiting on employee" />
+            <LegendItem icon={CheckCircle2} className="text-green-700" label="Completed" />
+          </section>
+
           <p className="mt-3 text-xs text-gray-600">
-            Click a direct report&rsquo;s name to see their goals. You can open or view any review you manage, past or
-            present. For everyone else on your team you see status only, not answers or goals. Each person can be
-            reminded once every 3 days.
+            Click a direct report&rsquo;s name or goals icon to see their goals. You can open or view any review you
+            manage, past or present. For everyone else on your team you see status only, not answers or goals. Each
+            person can be reminded once every 3 days.
           </p>
         </>
       )}
@@ -226,34 +236,113 @@ export default function Team() {
   )
 }
 
-function RowAction({ row, onRemind }) {
-  if (row.status === 'with_manager' && row.reviewId) {
+function Th({ label, sortKey, sort, onSort, center }) {
+  const active = sort.key === sortKey
+  return (
+    <th scope="col" className={`px-3 py-2 text-xs font-semibold text-gray-600 border-b border-gray-200 ${center ? 'text-center' : ''}`}>
+      <button type="button" onClick={() => onSort(sortKey)} className={`flex items-center gap-1 ${center ? 'mx-auto' : ''}`}>
+        {label}
+        {active && <span aria-hidden="true">{sort.dir === 'asc' ? '▲' : '▼'}</span>}
+      </button>
+    </th>
+  )
+}
+
+function iconCellClasses() {
+  return 'inline-flex items-center justify-center w-9 h-9 rounded-lg'
+}
+
+function IconCell({ icon: Icon, className, title, to, linkState, onClick }) {
+  const content = <Icon size={18} className={className} aria-hidden="true" />
+  if (to) {
     return (
-      <Link to={`/team/${encodeURIComponent(row.employeeEmail)}/review/${row.reviewId}`} state={{ displayName: row.displayName }}
-        className="inline-block bg-brand text-white rounded-lg px-4 py-2 text-sm font-semibold">
-        Open review
+      <Link to={to} state={linkState} title={title} aria-label={title} className={`${iconCellClasses()} hover:bg-gray-100`}>
+        {content}
       </Link>
     )
   }
-  if (row.status === 'locked' && row.reviewId) {
+  if (onClick) {
     return (
-      <Link to={`/team/${encodeURIComponent(row.employeeEmail)}/review/${row.reviewId}`} state={{ displayName: row.displayName }}
-        className="inline-block bg-white text-brand border border-brand rounded-lg px-4 py-2 text-sm font-semibold">
-        View signed record
-      </Link>
-    )
-  }
-  if (row.status === 'draft') {
-    const remindedRecently = row.lastNudgedAt && (Date.now() - new Date(row.lastNudgedAt).getTime()) < THREE_DAYS_MS
-    if (remindedRecently) {
-      return <span className="text-sm text-gray-600">Reminded {new Date(row.lastNudgedAt).toLocaleDateString()}</span>
-    }
-    return (
-      <button type="button" onClick={() => onRemind(row.employeeEmail)}
-        className="bg-white text-brand border border-brand rounded-lg px-4 py-2 text-sm font-semibold min-h-[44px]">
-        Send reminder
+      <button type="button" onClick={onClick} title={title} aria-label={title} className={`${iconCellClasses()} hover:bg-gray-100`}>
+        {content}
       </button>
     )
   }
-  return <span className="text-sm text-gray-600">No action needed</span>
+  return <span title={title} aria-label={title} className={iconCellClasses()}>{content}</span>
+}
+
+function reviewCellProps(person, col, cell, name, nudgeByEmail, onRemind) {
+  const email = person.employee_email
+  const linkTo = cell.id ? `/team/${encodeURIComponent(email)}/review/${cell.id}` : null
+  const linkState = { displayName: name }
+
+  if (cell.state === 'na') return { icon: MinusCircle, className: 'text-gray-300', title: `${col.label}: not applicable for ${name}` }
+  if (cell.state === 'future') return { icon: Circle, className: 'text-gray-300', title: `${col.label}: not opened yet` }
+
+  if (cell.state === 'draft') {
+    const lastNudged = nudgeByEmail[email]
+    const remindedRecently = lastNudged && (Date.now() - new Date(lastNudged).getTime()) < THREE_DAYS_MS
+    if (remindedRecently) {
+      return { icon: Bell, className: 'text-gray-400', title: `${col.label}: reminded ${new Date(lastNudged).toLocaleDateString()}` }
+    }
+    return { icon: Bell, className: 'text-amber-600', title: `${col.label}: draft — send ${name} a reminder`, onClick: () => onRemind(email) }
+  }
+  if (cell.state === 'with_manager') {
+    return linkTo
+      ? { icon: Clock, className: 'text-amber-600', title: `${col.label}: waiting on you`, to: linkTo, linkState }
+      : { icon: Clock, className: 'text-amber-600', title: `${col.label}: with ${name}'s manager` }
+  }
+  if (cell.state === 'awaiting_employee') {
+    return linkTo
+      ? { icon: Clock, className: 'text-blue-600', title: `${col.label}: waiting on ${name} to sign off`, to: linkTo, linkState }
+      : { icon: Clock, className: 'text-blue-600', title: `${col.label}: waiting on ${name} to sign off` }
+  }
+  // locked
+  return linkTo
+    ? { icon: CheckCircle2, className: 'text-green-700', title: `${col.label}: completed — view signed record`, to: linkTo, linkState }
+    : { icon: CheckCircle2, className: 'text-green-700', title: `${col.label}: completed` }
+}
+
+function FteIcon({ hours }) {
+  if (!hours) return <span title="Hours not set" aria-label="Hours not set" className="inline-flex items-center justify-center w-9 h-9 text-gray-300"><Circle size={14} /></span>
+  const full = hours === 'full_time'
+  const label = full ? 'Full-time' : 'Part-time'
+  return (
+    <span title={label} aria-label={label} className="inline-flex items-center justify-center w-9 h-9 text-gray-600">
+      <Circle size={14} fill={full ? 'currentColor' : 'none'} />
+    </span>
+  )
+}
+
+function StaffTypeIcon({ workerType }) {
+  const entry = STAFF_TYPES.find(([k]) => k === workerType)
+  if (!entry) return <span title="Staff type not set" aria-label="Staff type not set" className="inline-flex items-center justify-center w-9 h-9 text-gray-300"><MinusCircle size={14} /></span>
+  const [, label, Icon] = entry
+  return <span title={label} aria-label={label} className="inline-flex items-center justify-center w-9 h-9 text-gray-600"><Icon size={16} /></span>
+}
+
+function GoalsCell({ person, name }) {
+  if (!person.is_direct) {
+    return (
+      <span title="Only visible for direct reports" aria-label="Goals not visible" className="inline-flex items-center justify-center w-9 h-9 text-gray-300">
+        <Target size={16} />
+      </span>
+    )
+  }
+  return (
+    <Link to={`/team/${encodeURIComponent(person.employee_email)}/goals`} state={{ displayName: name }}
+      title={`View ${name}'s goals`} aria-label={`View ${name}'s goals`}
+      className={`${iconCellClasses()} text-brand hover:bg-gray-100`}>
+      <Target size={16} />
+    </Link>
+  )
+}
+
+function LegendItem({ icon: Icon, className, iconProps, label }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <Icon size={16} className={className || 'text-gray-600'} {...iconProps} />
+      {label}
+    </span>
+  )
 }
