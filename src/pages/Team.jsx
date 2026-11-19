@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Briefcase, Handshake, Heart, Circle, MinusCircle, Clock, CheckCircle2, Bell, Target } from 'lucide-react'
 import Page, { Todo } from '../components/Page'
-import { teamStatus, teamRoster, teamLastNudge, listReviewIds, listRequiredReviews, requestNudge } from '../lib/rev'
+import { useAuth } from '../context/AuthContext'
+import { useRev } from '../context/RevContext'
+import { teamStatus, teamRoster, teamLastNudge, listReviewIds, listRequiredReviews, requestNudge, addParticipant } from '../lib/rev'
 import { fiscalYearOf, fiscalYearLabel } from '../lib/fiscal'
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
@@ -15,9 +17,13 @@ const QUARTER_COLS = [
 ]
 const STAFF_TYPES = [['paid', 'Paid', Briefcase], ['seconded', 'Supported', Handshake], ['volunteer', 'Volunteer', Heart]]
 const HOURS_TYPES = [['full_time', 'Full-time'], ['part_time', 'Part-time']]
+const FTE_CYCLE = ['full_time', 'part_time']
+const STAFF_CYCLE = ['paid', 'seconded', 'volunteer']
 const STATUS_RANK = { na: 0, future: 1, draft: 2, with_manager: 3, awaiting_employee: 4, locked: 5 }
 
 export default function Team() {
+  const { profile } = useAuth()
+  const rev = useRev()
   const currentFy = fiscalYearOf()
 
   const [roster, setRoster] = useState(null)
@@ -121,6 +127,32 @@ export default function Team() {
     }
   }
 
+  // Admins only -- rev_participants writes are admin-only (RLS), same as the Questions &
+  // cycles page's Participants section. addParticipant() upserts, so it both adds someone
+  // who isn't a participant yet and edits an existing one's hours/worker_type in one call.
+  async function setParticipantField(person, field, value) {
+    const hours = field === 'hours' ? value : (person.hours || 'full_time')
+    const workerType = field === 'worker_type' ? value : (person.worker_type || 'paid')
+    setRoster(prev => prev.map(p => (p.employee_email === person.employee_email
+      ? { ...p, hours, worker_type: workerType, is_participant: true } : p)))
+    try {
+      await addParticipant(person.employee_email, { hours, workerType }, profile.primary_email)
+    } catch (e) {
+      setError(e.message)
+      load()
+    }
+  }
+
+  function cycleHours(person) {
+    const idx = person.hours ? FTE_CYCLE.indexOf(person.hours) : -1
+    setParticipantField(person, 'hours', FTE_CYCLE[(idx + 1) % FTE_CYCLE.length])
+  }
+
+  function cycleType(person) {
+    const idx = person.worker_type ? STAFF_CYCLE.indexOf(person.worker_type) : -1
+    setParticipantField(person, 'worker_type', STAFF_CYCLE[(idx + 1) % STAFF_CYCLE.length])
+  }
+
   return (
     <Page title="My team" subtitle={roster ? `${sorted.length} ${sorted.length === 1 ? 'person' : 'people'} · ${fiscalYearLabel(fy)}` : undefined}>
       <div className="flex flex-wrap gap-3 items-end justify-between mb-4">
@@ -196,8 +228,12 @@ export default function Team() {
                             </span>
                           )}
                         </th>
-                        <td className="px-3 py-2 border-b border-gray-100 text-center"><FteIcon hours={person.hours} /></td>
-                        <td className="px-3 py-2 border-b border-gray-100 text-center"><StaffTypeIcon workerType={person.worker_type} /></td>
+                        <td className="px-3 py-2 border-b border-gray-100 text-center">
+                          <FteIcon hours={person.hours} onClick={rev.admin ? () => cycleHours(person) : null} />
+                        </td>
+                        <td className="px-3 py-2 border-b border-gray-100 text-center">
+                          <StaffTypeIcon workerType={person.worker_type} onClick={rev.admin ? () => cycleType(person) : null} />
+                        </td>
                         <td className="px-3 py-2 border-b border-gray-100 text-center"><GoalsCell person={person} name={name} /></td>
                         {QUARTER_COLS.map(col => {
                           const props = reviewCellProps(person, col, person.cells[col.key], name, nudgeByEmail, handleRemind)
@@ -303,22 +339,43 @@ function reviewCellProps(person, col, cell, name, nudgeByEmail, onRemind) {
     : { icon: CheckCircle2, className: 'text-green-700', title: `${col.label}: completed` }
 }
 
-function FteIcon({ hours }) {
-  if (!hours) return <span title="Hours not set" aria-label="Hours not set" className="inline-flex items-center justify-center w-9 h-9 text-gray-300"><Circle size={14} /></span>
+function FteIcon({ hours, onClick }) {
   const full = hours === 'full_time'
-  const label = full ? 'Full-time' : 'Part-time'
+  const label = !hours ? 'Hours not set' : (full ? 'Full-time' : 'Part-time')
+  const icon = !hours
+    ? <Circle size={14} className="text-gray-300" />
+    : <Circle size={14} fill={full ? 'currentColor' : 'none'} className="text-gray-600" />
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} title={`${label} — click to change`} aria-label={`${label} — click to change`}
+        className={iconCellClasses() + ' hover:bg-gray-100'}>
+        {icon}
+      </button>
+    )
+  }
+  return <span title={label} aria-label={label} className={iconCellClasses()}>{icon}</span>
+}
+
+function StaffTypeIcon({ workerType, onClick }) {
+  const entry = STAFF_TYPES.find(([k]) => k === workerType)
+  const label = entry ? entry[1] : 'Staff type not set'
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} title={`${label} — click to change`} aria-label={`${label} — click to change`}
+        className={iconCellClasses() + ' hover:bg-gray-100'}>
+        {entry ? <StaffTypeGlyph Icon={entry[2]} /> : <MinusCircle size={14} className="text-gray-300" />}
+      </button>
+    )
+  }
   return (
-    <span title={label} aria-label={label} className="inline-flex items-center justify-center w-9 h-9 text-gray-600">
-      <Circle size={14} fill={full ? 'currentColor' : 'none'} />
+    <span title={label} aria-label={label} className={iconCellClasses()}>
+      {entry ? <StaffTypeGlyph Icon={entry[2]} /> : <MinusCircle size={14} className="text-gray-300" />}
     </span>
   )
 }
 
-function StaffTypeIcon({ workerType }) {
-  const entry = STAFF_TYPES.find(([k]) => k === workerType)
-  if (!entry) return <span title="Staff type not set" aria-label="Staff type not set" className="inline-flex items-center justify-center w-9 h-9 text-gray-300"><MinusCircle size={14} /></span>
-  const [, label, Icon] = entry
-  return <span title={label} aria-label={label} className="inline-flex items-center justify-center w-9 h-9 text-gray-600"><Icon size={16} /></span>
+function StaffTypeGlyph({ Icon }) {
+  return <Icon size={16} className="text-gray-600" />
 }
 
 function GoalsCell({ person, name }) {

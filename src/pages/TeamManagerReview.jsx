@@ -105,7 +105,6 @@ export default function TeamManagerReview() {
       <div className="flex flex-wrap gap-6 items-start">
         <nav aria-label={`${displayName}'s reviews`} className="flex-none w-full sm:w-48 flex flex-col gap-1">
           {personReviews === null && <p className="text-sm text-gray-500">Loading…</p>}
-          {personReviews?.length === 0 && <p className="text-sm text-gray-500">No reviews yet.</p>}
           {personReviews?.map(r => (
             <Link key={r.id} to={`/team/${encodeURIComponent(email)}/review/${r.id}`} state={{ displayName }}
               className={`flex flex-col gap-0.5 rounded-lg px-3 py-2 border-l-[3px] transition-colors
