@@ -821,8 +821,10 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- The caller's whole reporting tree (direct and indirect) straight from the
--- directory, or everyone for admins. Unlike rev_team_status this doesn't
--- require a review to exist yet -- it's who reports to you, not review status.
+-- directory. Unlike rev_team_status this doesn't require a review to exist
+-- yet -- it's who reports to you, not review status. Always scoped to the
+-- caller's own tree, even for admins: this is a personal roster, not an
+-- org-wide view (that's rev_department_report/_status).
 create or replace function rev_team_roster()
 returns table (employee_email text, display_name text, manager_email text, is_direct boolean, is_participant boolean)
 language sql stable security definer set search_path = public as $$
@@ -831,7 +833,7 @@ language sql stable security definer set search_path = public as $$
          exists(select 1 from rev_participants rp where rp.email = lower(pr.primary_email) and rp.active)
   from profiles pr
   where current_profile_email() is not null
-    and (rev_is_admin() or lower(pr.primary_email) in (select get_report_emails()))
+    and lower(pr.primary_email) in (select get_report_emails())
   order by pr.display_name
 $$;
 
