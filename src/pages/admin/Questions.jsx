@@ -743,7 +743,7 @@ function QuestionCard({ q, index, count, editing, onToggleEdit, onMove, onRemove
           </div>
           <fieldset className="border-0 m-0 p-0 flex flex-col gap-0.5">
             <legend className="text-sm font-semibold p-0 pb-1">Who is asked this question</legend>
-            <div className="flex flex-wrap gap-x-5 gap-y-1">
+            <div className="flex flex-col gap-0.5">
               {WORKER_TYPES.map(([k, label]) => (
                 <label key={k} className="flex gap-2 items-center text-[15px] min-h-[44px]">
                   <input type="checkbox" checked={q.worker_types.includes(k)} onChange={() => onToggleWorkerType(k)} className="w-5 h-5" />
