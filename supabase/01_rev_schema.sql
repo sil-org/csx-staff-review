@@ -820,6 +820,21 @@ language sql stable security definer set search_path = public as $$
   order by r.period_year desc, r.period_quarter desc nulls last, r.employee_email
 $$;
 
+-- The caller's whole reporting tree (direct and indirect) straight from the
+-- directory, or everyone for admins. Unlike rev_team_status this doesn't
+-- require a review to exist yet -- it's who reports to you, not review status.
+create or replace function rev_team_roster()
+returns table (employee_email text, display_name text, manager_email text, is_direct boolean, is_participant boolean)
+language sql stable security definer set search_path = public as $$
+  select lower(pr.primary_email), pr.display_name, lower(nullif(trim(pr.manager_email), '')),
+         lower(nullif(trim(pr.manager_email), '')) = rev_me(),
+         exists(select 1 from rev_participants rp where rp.email = lower(pr.primary_email) and rp.active)
+  from profiles pr
+  where current_profile_email() is not null
+    and (rev_is_admin() or lower(pr.primary_email) in (select get_report_emails()))
+  order by pr.display_name
+$$;
+
 -- Manager or admin: queue a reminder email for someone in their tree.
 -- Returns false if that person was already nudged in the last 3 days (rate limit).
 -- The edge function that sends queued rows checks nothing about who asked, so
@@ -857,7 +872,7 @@ revoke execute on function
   rev_can_edit_answers(uuid), rev_can_comment(uuid),
   rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_cycle_history(), rev_review_key(text, int),
   rev_send_for_signoff(uuid), rev_sign_review(uuid, boolean, text), rev_compute_hash(uuid),
-  rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(),
+  rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(), rev_team_roster(),
   rev_request_nudge(text)
 from public, anon;
 
@@ -869,6 +884,6 @@ grant execute on function
   rev_can_edit_answers(uuid), rev_can_comment(uuid),
   rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_cycle_history(), rev_review_key(text, int),
   rev_send_for_signoff(uuid), rev_sign_review(uuid, boolean, text),
-  rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(),
+  rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(), rev_team_roster(),
   rev_request_nudge(text)
 to authenticated;

@@ -109,6 +109,7 @@ export const sendForSignoff = (reviewId) => rpc('rev_send_for_signoff', { p_revi
 export const signReview = (reviewId, agree, note) => rpc('rev_sign_review', { p_review_id: reviewId, p_agreed: agree, p_note: note })
 
 export const teamStatus = () => rpc('rev_team_status')
+export const teamRoster = () => rpc('rev_team_roster')
 export const requestNudge = (email) => rpc('rev_request_nudge', { p_employee_email: email })
 export const teamCheckinStatus = (periodMonth) => rpc('rev_team_checkin_status', { p_period_month: periodMonth })
 export const teamLastNudge = () => rpc('rev_team_last_nudge')

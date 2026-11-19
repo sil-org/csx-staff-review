@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Page, { Todo } from '../components/Page'
 import { useAuth } from '../context/AuthContext'
-import { teamStatus, teamCheckinStatus, teamLastNudge, listReviewIds, listProfiles, requestNudge } from '../lib/rev'
+import { teamStatus, teamRoster, teamCheckinStatus, teamLastNudge, listReviewIds, listProfiles, requestNudge } from '../lib/rev'
 import { periodLabel, statusLabel } from '../lib/reviewLabels'
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
@@ -16,6 +16,7 @@ export default function Team() {
   const me = profile?.primary_email?.toLowerCase()
 
   const [rows, setRows] = useState(null)
+  const [roster, setRoster] = useState(null)
   const [error, setError] = useState('')
   const [view, setView] = useState('team') // 'team' | 'direct'
   const [period, setPeriod] = useState('all')
@@ -24,8 +25,9 @@ export default function Team() {
   useEffect(() => {
     let cancelled = false
     setRows(null)
-    Promise.all([teamStatus(), teamCheckinStatus(), teamLastNudge(), listReviewIds()])
-      .then(async ([statusRows, checkins, nudges, reviewIds]) => {
+    setRoster(null)
+    Promise.all([teamStatus(), teamCheckinStatus(), teamLastNudge(), listReviewIds(), teamRoster()])
+      .then(async ([statusRows, checkins, nudges, reviewIds, rosterRows]) => {
         const checkinByEmail = Object.fromEntries(checkins.map(c => [c.employee_email, c]))
         const nudgeByEmail = Object.fromEntries(nudges.map(n => [n.employee_email, n.last_nudged_at]))
         const idByKey = Object.fromEntries(
@@ -60,7 +62,7 @@ export default function Team() {
             lastNudgedAt: nudgeByEmail[r.employee_email] || null,
           }
         })
-        if (!cancelled) setRows(merged)
+        if (!cancelled) { setRows(merged); setRoster(rosterRows) }
       })
       .catch(e => { if (!cancelled) setError(e.message) })
     return () => { cancelled = true }
@@ -75,6 +77,11 @@ export default function Team() {
     }
     return [...seen.values()].sort((a, b) => b.year - a.year || (b.quarter ?? -1) - (a.quarter ?? -1))
   }, [rows])
+
+  const rosterFiltered = useMemo(() => {
+    if (!roster) return []
+    return view === 'direct' ? roster.filter(p => p.is_direct) : roster
+  }, [roster, view])
 
   const filtered = useMemo(() => {
     if (!rows) return []
@@ -134,6 +141,31 @@ export default function Team() {
 
       {rows && (
         <>
+          <section aria-label="Your team" className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
+            <h2 className="text-base font-semibold mb-2">
+              {view === 'direct' ? 'Direct reports' : 'Whole team'} ({rosterFiltered.length})
+            </h2>
+            {rosterFiltered.length === 0 ? (
+              <p className="text-sm text-gray-600 m-0">Nobody reports to you yet in the directory.</p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {rosterFiltered.map(p => (
+                  <li key={p.employee_email}
+                    className="flex items-center gap-2 border border-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span>{p.display_name || p.employee_email}</span>
+                    {!p.is_participant && (
+                      <span className="bg-amber-100 text-amber-800 text-xs font-semibold rounded-full px-2 py-0.5">Not in reviews yet</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-gray-600 mt-2 mb-0">
+              From the directory&rsquo;s reporting line. A review only shows below once someone&rsquo;s added as a
+              participant and a cycle is opened for them.
+            </p>
+          </section>
+
           <div className="flex flex-wrap gap-3 mb-6">
             {tiles.map(t => (
               <div key={t.status} className="flex-1 min-w-[160px] bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-2">
