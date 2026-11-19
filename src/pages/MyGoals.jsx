@@ -153,7 +153,7 @@ export default function MyGoals() {
                 <span>{g.latest ? `Last check-in ${new Date(g.latest.period_month).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'No check-ins yet'}</span>
                 <span className="flex gap-2 flex-wrap">
                   <button type="button" onClick={() => { setCancelId(cancelId === g.id ? null : g.id); setCancelReason(''); setOpenGoalId(null) }}
-                    className="bg-white text-red-800 border border-red-800 rounded-lg px-3.5 py-2 text-sm font-semibold min-h-[44px]">
+                    className="text-red-800 font-semibold text-sm underline-offset-2 hover:underline min-h-[44px] px-1">
                     Cancel goal
                   </button>
                   <button type="button" onClick={() => { setOpenGoalId(openGoalId === g.id ? null : g.id); setCancelId(null) }}

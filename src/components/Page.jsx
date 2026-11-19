@@ -8,7 +8,7 @@ export default function Page({ title, subtitle, children }) {
   const rev = useRev()
   return (
     <AppLayout appName={APP_NAME} links={getLinks(rev)}>
-      <div className="p-8 max-w-4xl">
+      <div className="p-8 pt-16 md:pt-8 max-w-4xl">
         <h1 className="font-display text-3xl font-bold text-brand">{title}</h1>
         {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
         <div className="mt-6">{children}</div>
