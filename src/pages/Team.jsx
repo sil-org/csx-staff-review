@@ -34,7 +34,7 @@ export default function Team() {
   const [error, setError] = useState('')
   const [remindError, setRemindError] = useState('')
 
-  const [view, setView] = useState('team') // 'team' | 'direct'
+  const [view, setView] = useState('direct') // 'direct' | 'team'
   const [fy, setFy] = useState(currentFy)
   const [hoursFilter, setHoursFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -156,14 +156,14 @@ export default function Team() {
   return (
     <Page title="My team" subtitle={roster ? `${sorted.length} ${sorted.length === 1 ? 'person' : 'people'} · ${fiscalYearLabel(fy)}` : undefined}>
       <div className="flex flex-wrap gap-3 items-end justify-between mb-4">
-        <div role="group" aria-label="Show" className="flex gap-2 flex-wrap">
-          {[['direct', 'Direct reports'], ['team', 'Whole team']].map(([key, label]) => (
-            <button key={key} aria-pressed={view === key} onClick={() => setView(key)}
-              className={`px-4 min-h-[44px] rounded-full border text-sm font-semibold ${view === key ? 'bg-brand text-white border-brand' : 'bg-white text-gray-700 border-gray-400'}`}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <label className="text-sm font-semibold text-gray-600 flex flex-col gap-1">
+          Show
+          <select value={view} onChange={e => setView(e.target.value)}
+            className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal text-base">
+            <option value="direct">Direct reports</option>
+            <option value="team">Whole team</option>
+          </select>
+        </label>
         <div className="flex gap-3 items-end flex-wrap">
           <label className="text-sm font-semibold text-gray-600 flex flex-col gap-1">
             Fiscal year
