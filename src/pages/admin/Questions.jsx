@@ -6,14 +6,12 @@ import { useRev } from '../../context/RevContext'
 import {
   activeTemplate, createTemplate, listQuestions, saveQuestions,
   cyclePreview, openCycle, cycleHistory, listRequiredReviews, setRequiredReview, getSettings, updateSettings,
-  listParticipants, searchProfiles, findProfile, addParticipant, updateParticipant, removeParticipant, listProfiles,
 } from '../../lib/rev'
 import { fiscalYearOf, fiscalQuarterOf } from '../../lib/fiscal'
 
 const TYPES = [['paragraph', 'Paragraph'], ['short_text', 'Short text'], ['select', 'Select (dropdown)']]
 const WORKER_TYPES = [['paid', 'Paid'], ['seconded', 'Seconded'], ['volunteer', 'Volunteers']]
 const ALL_WORKER_TYPES = WORKER_TYPES.map(([k]) => k)
-const HOURS = [['full_time', 'Full-time'], ['part_time', 'Part-time']]
 const REVIEW_KEYS = [['q1', 'Q1'], ['q2', 'Q2'], ['q3', 'Q3'], ['q4', 'Q4'], ['annual', 'Annual']]
 
 // Two fiscal years' worth of cycles to pick from when opening one.
@@ -55,78 +53,51 @@ export default function AdminQuestions() {
   const [questions, setQuestions] = useState(null)
   const [removedIds, setRemovedIds] = useState([])
   const [editingId, setEditingId] = useState(null)
-  const [dirty, setDirty] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [savedMessage, setSavedMessage] = useState('')
+  const [saveStatus, setSaveStatus] = useState({ state: 'idle' })
   const [error, setError] = useState('')
+  const skipNextAutosave = useRef(true)
 
   function load() {
     setError('')
     setQuestions(null)
-    setSavedMessage('')
+    setSaveStatus({ state: 'idle' })
     activeTemplate(kind)
       .then(t => t || createTemplate(kind, kind === 'quarterly' ? 'Quarterly review questions' : 'Annual review questions', profile.primary_email))
       .then(async t => {
         const rows = await listQuestions(t.id)
         setTemplateId(t.id)
+        skipNextAutosave.current = true
         setQuestions(rows.map(fromRow))
         setRemovedIds([])
         setEditingId(null)
-        setDirty(false)
       })
       .catch(e => setError(e.message))
   }
 
   useEffect(() => { if (rev.ready && rev.admin) load() }, [kind, rev.ready, rev.admin])
 
-  // --- participants ---
-  const [participants, setParticipants] = useState(null)
-  const [partError, setPartError] = useState('')
+  // Autosaves the whole question list (and any pending deletions) a moment after it last
+  // changed, so typing doesn't fire a request per keystroke. Skips the save -- without
+  // erroring -- while any question is incomplete; that question's own card already shows
+  // why (empty prompt / no choices yet).
+  useEffect(() => {
+    if (!questions) return
+    if (skipNextAutosave.current) { skipNextAutosave.current = false; return }
+    const timer = setTimeout(() => {
+      const incomplete = questions.find(q => !q.prompt.trim())
+      if (incomplete) { setSaveStatus({ state: 'blocked', message: 'Add the question text to save it.' }); return }
+      const needsChoices = questions.find(q => q.type === 'select' && optionLines(q.optionsText).length === 0)
+      if (needsChoices) { setSaveStatus({ state: 'blocked', message: `"${needsChoices.prompt}" needs at least one choice to save.` }); return }
 
-  function loadParticipants() {
-    setPartError('')
-    listParticipants()
-      .then(async rows => {
-        const emails = rows.map(r => r.email)
-        const profiles = emails.length ? await listProfiles(emails) : []
-        const byEmail = Object.fromEntries(profiles.map(p => [p.primary_email.toLowerCase(), p.display_name]))
-        setParticipants(rows.map(r => ({ ...r, display_name: byEmail[r.email] || null })))
-      })
-      .catch(e => setPartError(e.message))
-  }
-
-  useEffect(() => { if (rev.ready && rev.admin) loadParticipants() }, [rev.ready, rev.admin])
-
-  async function handleAddParticipant(email, hours, workerType) {
-    const clean = email.trim().toLowerCase()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new Error('Enter a valid email address')
-    if ((participants || []).some(p => p.email === clean)) throw new Error(`${clean} is already a participant`)
-    const matched = await findProfile(clean).catch(() => null)
-    await addParticipant(clean, { hours, workerType }, profile.primary_email)
-    loadParticipants()
-    if (matched && matched.manager_email) return null
-    return `Added ${clean}. ${matched ? 'No manager is on file for them yet' : "They aren't in the directory yet"} — they won't be able to submit a review until that's set.`
-  }
-
-  async function handleUpdateParticipant(email, fields) {
-    setParticipants(ps => ps.map(p => (p.email === email ? { ...p, ...fields } : p)))
-    try {
-      await updateParticipant(email, { hours: fields.hours, workerType: fields.worker_type })
-    } catch (e) {
-      setPartError(e.message)
-      loadParticipants()
-    }
-  }
-
-  async function handleRemoveParticipant(email) {
-    setParticipants(ps => ps.filter(p => p.email !== email))
-    try {
-      await removeParticipant(email)
-    } catch (e) {
-      setPartError(e.message)
-      loadParticipants()
-    }
-  }
+      setSaveStatus({ state: 'saving' })
+      const payload = questions.map(q => ({ ...q, options: optionLines(q.optionsText) }))
+      saveQuestions(templateId, payload, removedIds)
+        .then(() => { setRemovedIds([]); setSaveStatus({ state: 'saved' }) })
+        .catch(e => setSaveStatus({ state: 'error', message: e.message }))
+    }, 800)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, removedIds])
 
   // --- required reviews & settings ---
   const [required, setRequired] = useState(null)
@@ -215,8 +186,6 @@ export default function AdminQuestions() {
 
   function patch(id, fields) {
     setQuestions(qs => qs.map(q => (q.id === id ? { ...q, ...fields } : q)))
-    setDirty(true)
-    setSavedMessage('')
   }
 
   function move(from, to) {
@@ -227,8 +196,6 @@ export default function AdminQuestions() {
       next.splice(to, 0, item)
       return next
     })
-    setDirty(true)
-    setSavedMessage('')
   }
 
   // Drag-to-reorder: the handle captures the pointer on pointerdown, so moves keep
@@ -271,16 +238,12 @@ export default function AdminQuestions() {
     const q = newQuestion()
     setQuestions(qs => (qs || []).concat([q]))
     setEditingId(q.id)
-    setDirty(true)
-    setSavedMessage('')
   }
 
   function removeQuestion(id) {
     setQuestions(qs => qs.filter(q => q.id !== id))
     setRemovedIds(ids => ids.concat([id]))
     if (editingId === id) setEditingId(null)
-    setDirty(true)
-    setSavedMessage('')
   }
 
   function toggleWorkerType(q, key) {
@@ -288,29 +251,6 @@ export default function AdminQuestions() {
     const next = ALL_WORKER_TYPES.filter(k => (k === key ? !has : q.worker_types.includes(k)))
     if (next.length === 0) return
     patch(q.id, { worker_types: next })
-  }
-
-  async function handleSave() {
-    for (const q of questions) {
-      if (!q.prompt.trim()) { setError('Every question needs its text filled in.'); return }
-      if (q.type === 'select' && optionLines(q.optionsText).length === 0) {
-        setError(`"${q.prompt}" needs at least one choice since it's a select question.`)
-        return
-      }
-    }
-    setSaving(true)
-    setError('')
-    try {
-      const payload = questions.map(q => ({ ...q, options: optionLines(q.optionsText) }))
-      await saveQuestions(templateId, payload, removedIds)
-      setSavedMessage('Saved. New reviews will use these questions.')
-      setDirty(false)
-      setRemovedIds([])
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setSaving(false)
-    }
   }
 
   if (!rev.ready) {
@@ -375,11 +315,7 @@ export default function AdminQuestions() {
             className="bg-white text-brand border border-brand rounded-lg px-4 min-h-[44px] text-sm font-semibold">
             Add a question
           </button>
-          <button type="button" disabled={saving || !dirty || !questions} onClick={handleSave}
-            className="bg-brand text-white rounded-lg px-4 min-h-[44px] text-sm font-semibold disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
-          {savedMessage && <span role="status" className="text-sm text-green-800">{savedMessage}</span>}
+          <SaveStatus status={saveStatus} />
         </div>
       </section>
 
@@ -394,9 +330,6 @@ export default function AdminQuestions() {
         onToggleSkipQ4={toggleSkipQ4} onReminderDayChange={handleReminderDayChange} onReminderDayBlur={handleReminderDayBlur} />
 
       <CycleHistorySection history={history} error={historyError} />
-
-      <ParticipantsSection participants={participants} error={partError}
-        onAdd={handleAddParticipant} onUpdate={handleUpdateParticipant} onRemove={handleRemoveParticipant} />
     </Page>
   )
 }
@@ -566,166 +499,12 @@ function CycleHistorySection({ history, error }) {
   )
 }
 
-function ParticipantsSection({ participants, error, onAdd, onUpdate, onRemove }) {
-  const counts = (participants || []).reduce((acc, p) => {
-    acc.worker[p.worker_type] = (acc.worker[p.worker_type] || 0) + 1
-    acc.hours[p.hours] = (acc.hours[p.hours] || 0) + 1
-    return acc
-  }, { worker: {}, hours: {} })
-
-  return (
-    <section aria-labelledby="part" className="bg-white border border-gray-200 rounded-xl p-5 mt-6">
-      <h2 id="part" className="text-lg font-semibold m-0 mb-1">Participants</h2>
-      <p className="text-sm text-gray-600 mb-1">
-        Only people listed here get reviews. Their hours decide which reviews they must have. Their worker type decides which questions they are asked.
-      </p>
-      {participants && (
-        <p className="text-sm text-gray-600 mb-3">
-          {participants.length} people: {counts.worker.paid || 0} paid, {counts.worker.seconded || 0} seconded, {counts.worker.volunteer || 0} volunteers.{' '}
-          {counts.hours.full_time || 0} full-time, {counts.hours.part_time || 0} part-time.
-        </p>
-      )}
-
-      {error && <p role="alert" className="text-red-700 mb-3">{error}</p>}
-
-      <AddParticipantForm onAdd={onAdd} />
-
-      {participants === null && !error && <p className="text-gray-500">Loading…</p>}
-      {participants && participants.length === 0 && <Todo>No participants yet. Add someone above.</Todo>}
-
-      {participants && participants.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] border-collapse text-[15px]">
-            <thead>
-              <tr className="text-left bg-gray-50">
-                <th scope="col" className="px-3 py-2 text-xs text-gray-600 font-semibold border-b border-gray-200">Person</th>
-                <th scope="col" className="px-3 py-2 text-xs text-gray-600 font-semibold border-b border-gray-200">Worker type</th>
-                <th scope="col" className="px-3 py-2 text-xs text-gray-600 font-semibold border-b border-gray-200">Hours</th>
-                <th scope="col" className="px-3 py-2 text-xs text-gray-600 font-semibold border-b border-gray-200"><span className="sr-only">Remove</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {participants.map(p => (
-                <tr key={p.email}>
-                  <th scope="row" className="px-3 py-1.5 text-left font-semibold border-b border-gray-100">
-                    {p.display_name || p.email}
-                    {p.display_name && <div className="text-xs font-normal text-gray-500">{p.email}</div>}
-                  </th>
-                  <td className="px-3 py-1.5 border-b border-gray-100">
-                    <label className="sr-only" htmlFor={`w-${p.email}`}>Worker type for {p.display_name || p.email}</label>
-                    <select id={`w-${p.email}`} value={p.worker_type} onChange={e => onUpdate(p.email, { worker_type: e.target.value })}
-                      className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal">
-                      {WORKER_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-3 py-1.5 border-b border-gray-100">
-                    <label className="sr-only" htmlFor={`h-${p.email}`}>Hours for {p.display_name || p.email}</label>
-                    <select id={`h-${p.email}`} value={p.hours} onChange={e => onUpdate(p.email, { hours: e.target.value })}
-                      className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal">
-                      {HOURS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-3 py-1.5 border-b border-gray-100 text-right">
-                    <button type="button" onClick={() => onRemove(p.email)}
-                      className="bg-white text-red-800 border border-red-800 rounded-lg px-3 py-1.5 text-sm font-semibold min-h-[44px]">
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  )
-}
-
-function AddParticipantForm({ onAdd }) {
-  const [query, setQuery] = useState('')
-  const [picked, setPicked] = useState(null)
-  const [suggestions, setSuggestions] = useState([])
-  const [hours, setHours] = useState('full_time')
-  const [workerType, setWorkerType] = useState('paid')
-  const [adding, setAdding] = useState(false)
-  const [error, setError] = useState('')
-  const [warning, setWarning] = useState('')
-  const timer = useRef(null)
-
-  useEffect(() => {
-    setPicked(p => (p && p.primary_email === query ? p : null))
-    clearTimeout(timer.current)
-    if (query.trim().length < 2) { setSuggestions([]); return }
-    timer.current = setTimeout(() => {
-      searchProfiles(query).then(setSuggestions).catch(() => setSuggestions([]))
-    }, 250)
-    return () => clearTimeout(timer.current)
-  }, [query])
-
-  async function handleAdd(e) {
-    e.preventDefault()
-    setError('')
-    setWarning('')
-    setAdding(true)
-    try {
-      const warn = await onAdd(query, hours, workerType)
-      setQuery('')
-      setPicked(null)
-      setSuggestions([])
-      if (warn) setWarning(warn)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setAdding(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleAdd} className="flex flex-col gap-2 mb-5">
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="flex-[2_1_220px] min-w-[220px] flex flex-col gap-1 relative">
-          <label htmlFor="participant-email" className="text-sm font-semibold">Add by email</label>
-          <input id="participant-email" type="email" required value={query} autoComplete="off"
-            onChange={e => setQuery(e.target.value)} placeholder="name@sil.org"
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] font-normal" />
-          {suggestions.length > 0 && !picked && (
-            <ul className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-md z-10 max-h-56 overflow-auto">
-              {suggestions.map(s => (
-                <li key={s.primary_email}>
-                  <button type="button"
-                    onClick={() => { setQuery(s.primary_email); setPicked(s); setSuggestions([]) }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
-                    <div className="font-semibold">{s.display_name || s.primary_email}</div>
-                    {s.display_name && <div className="text-gray-500 text-xs">{s.primary_email}</div>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <label className="flex-1 min-w-[130px] flex flex-col gap-1 text-sm font-semibold">
-          Worker type
-          <select value={workerType} onChange={e => setWorkerType(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal">
-            {WORKER_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-          </select>
-        </label>
-        <label className="flex-1 min-w-[130px] flex flex-col gap-1 text-sm font-semibold">
-          Hours
-          <select value={hours} onChange={e => setHours(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal">
-            {HOURS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-          </select>
-        </label>
-        <button type="submit" disabled={adding || !query.trim()}
-          className="bg-brand text-white rounded-lg px-4 min-h-[44px] text-sm font-semibold disabled:opacity-60">
-          {adding ? 'Adding…' : 'Add person'}
-        </button>
-      </div>
-      {error && <p role="alert" className="text-red-700 text-sm">{error}</p>}
-      {warning && <p role="status" className="text-amber-800 text-sm">{warning}</p>}
-    </form>
-  )
+function SaveStatus({ status }) {
+  if (status.state === 'saving') return <span role="status" className="text-sm text-gray-600">Saving…</span>
+  if (status.state === 'saved') return <span role="status" className="text-sm text-green-800">Saved. New reviews will use these questions.</span>
+  if (status.state === 'blocked') return <span role="status" className="text-sm text-gray-600">Not saved yet — {status.message}</span>
+  if (status.state === 'error') return <span role="alert" className="text-sm text-red-700">Couldn&rsquo;t save: {status.message}</span>
+  return null
 }
 
 function QuestionCard({

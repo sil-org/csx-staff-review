@@ -110,7 +110,7 @@ export async function upsertComment(reviewId, questionKey, body, authorEmail) {
 
 export async function listProfiles(emails) {
   const { data, error } = await supabase
-    .from('profiles').select('primary_email, display_name').in('primary_email', emails)
+    .from('profiles').select('primary_email, display_name, manager_email').in('primary_email', emails)
   if (error) throw error
   return data
 }

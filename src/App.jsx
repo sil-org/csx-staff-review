@@ -8,6 +8,7 @@ import TeamManagerReview from './pages/TeamManagerReview'
 import TeamPersonGoals from './pages/TeamPersonGoals'
 import LaunchReviews from './pages/LaunchReviews'
 import AdminQuestions from './pages/admin/Questions'
+import AdminParticipants from './pages/admin/Participants'
 import AdminDepartments from './pages/admin/Departments'
 import RequireAuth from './components/RequireAuth'
 
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/team/:email/goals" element={<RequireAuth><TeamPersonGoals /></RequireAuth>} />
       <Route path="/launch" element={<RequireAuth><LaunchReviews /></RequireAuth>} />
       <Route path="/admin/questions" element={<RequireAuth><AdminQuestions /></RequireAuth>} />
+      <Route path="/admin/participants" element={<RequireAuth><AdminParticipants /></RequireAuth>} />
       <Route path="/admin/departments" element={<RequireAuth><AdminDepartments /></RequireAuth>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
