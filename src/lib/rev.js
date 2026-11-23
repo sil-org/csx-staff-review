@@ -282,19 +282,19 @@ export async function findProfile(email) {
 }
 
 // Upsert so re-adding someone who was previously removed (active = false) just
-// reactivates them instead of erroring on the email primary key.
-export async function addParticipant(email, { hours, workerType }, addedBy) {
+// reactivates them instead of erroring on the email primary key. Worker type isn't
+// set here -- it's derived live from profiles.employee_type (rev_worker_type()).
+export async function addParticipant(email, { hours }, addedBy) {
   const { data, error } = await supabase.from('rev_participants')
-    .upsert({ email: email.toLowerCase(), hours, worker_type: workerType, active: true, added_by: addedBy.toLowerCase() }, { onConflict: 'email' })
+    .upsert({ email: email.toLowerCase(), hours, active: true, added_by: addedBy.toLowerCase() }, { onConflict: 'email' })
     .select().single()
   if (error) throw error
   return data
 }
 
-export async function updateParticipant(email, { hours, workerType } = {}) {
+export async function updateParticipant(email, { hours } = {}) {
   const patch = {}
   if (hours) patch.hours = hours
-  if (workerType) patch.worker_type = workerType
   const { error } = await supabase.from('rev_participants').update(patch).eq('email', email.toLowerCase())
   if (error) throw error
 }

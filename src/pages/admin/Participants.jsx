@@ -4,8 +4,17 @@ import { useAuth } from '../../context/AuthContext'
 import { useRev } from '../../context/RevContext'
 import { listParticipants, searchProfiles, findProfile, addParticipant, updateParticipant, removeParticipant, listProfiles } from '../../lib/rev'
 
-const WORKER_TYPES = [['paid', 'Paid'], ['seconded', 'Seconded'], ['volunteer', 'Volunteers']]
 const HOURS = [['full_time', 'Full-time'], ['part_time', 'Part-time']]
+
+// Worker type (which questions someone is asked) comes from the directory's employee_type,
+// never set by hand here -- mirrors rev_worker_type() in supabase/01_rev_schema.sql.
+const WORKER_TYPE_LABEL = { paid: 'Paid', seconded: 'Supported', volunteer: 'Volunteer' }
+function workerTypeFor(employeeType) {
+  if (employeeType === 'employee') return 'paid'
+  if (employeeType === 'member') return 'seconded'
+  if (employeeType === 'volunteer') return 'volunteer'
+  return null
+}
 
 export default function AdminParticipants() {
   const { profile } = useAuth()
@@ -38,6 +47,7 @@ export default function AdminParticipants() {
             manager_email: managerEmail,
             manager_name: managerProf?.display_name || null,
             is_contingent: prof?.employee_type === 'contingent',
+            worker_type: workerTypeFor(prof?.employee_type),
           }
         }))
       })
@@ -46,24 +56,26 @@ export default function AdminParticipants() {
 
   useEffect(() => { if (rev.ready && rev.admin) load() }, [rev.ready, rev.admin])
 
-  async function handleAdd(email, hours, workerType) {
+  async function handleAdd(email, hours) {
     const clean = email.trim().toLowerCase()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new Error('Enter a valid email address')
     if ((participants || []).some(p => p.email === clean)) throw new Error(`${clean} is already a participant`)
     const matched = await findProfile(clean).catch(() => null)
-    await addParticipant(clean, { hours, workerType }, profile.primary_email)
+    await addParticipant(clean, { hours }, profile.primary_email)
     load()
-    if (matched?.employee_type === 'contingent') {
-      return `Added ${clean}. They're a contingent worker, so they'll never be sent a review, no matter the hours/worker type set here.`
-    }
-    if (matched && matched.manager_email) return null
-    return `Added ${clean}. ${matched ? 'No manager is on file for them yet' : "They aren't in the directory yet"} — they won't be able to submit a review until that's set.`
+    if (!matched) return `Added ${clean}. They aren't in the directory yet — they won't be able to submit a review until they are.`
+    if (matched.employee_type === 'contingent') return `Added ${clean}. They're a contingent worker, so they'll never be sent a review.`
+    const issues = []
+    if (!matched.manager_email) issues.push('no manager is on file for them')
+    if (!workerTypeFor(matched.employee_type)) issues.push("their directory employee type isn't one reviews recognize")
+    if (issues.length) return `Added ${clean}, but ${issues.join(' and ')} — fix that before a review can reach them.`
+    return null
   }
 
   async function handleUpdate(email, fields) {
     setParticipants(ps => ps.map(p => (p.email === email ? { ...p, ...fields } : p)))
     try {
-      await updateParticipant(email, { hours: fields.hours, workerType: fields.worker_type })
+      await updateParticipant(email, { hours: fields.hours })
     } catch (e) {
       setError(e.message)
       load()
@@ -95,10 +107,10 @@ export default function AdminParticipants() {
 
   return (
     <Page title="Participants"
-      subtitle="Only people listed here get reviews. Their hours decide which reviews they must have, their worker type which questions they are asked.">
+      subtitle="Only people listed here get reviews. Their hours (set here) decide which reviews they must have; their worker type, from the directory, decides which questions they are asked.">
       {participants && (
         <p className="text-sm text-gray-600 mb-3">
-          {participants.length} people: {counts.worker.paid || 0} paid, {counts.worker.seconded || 0} seconded, {counts.worker.volunteer || 0} volunteers.{' '}
+          {participants.length} people: {counts.worker.paid || 0} paid, {counts.worker.seconded || 0} supported, {counts.worker.volunteer || 0} volunteers.{' '}
           {counts.hours.full_time || 0} full-time, {counts.hours.part_time || 0} part-time.
         </p>
       )}
@@ -140,14 +152,10 @@ export default function AdminParticipants() {
                     <td className="px-3 py-1.5 border-b border-gray-100 text-gray-700">
                       {p.manager_name || p.manager_email || <span className="text-amber-800">None on file</span>}
                     </td>
-                    <td className="px-3 py-1.5 border-b border-gray-100">
-                      <label className="sr-only" htmlFor={`w-${p.email}`}>Worker type for {p.display_name || p.email}</label>
-                      <select id={`w-${p.email}`} value={p.worker_type} disabled={p.is_contingent}
-                        title={p.is_contingent ? 'Contingent workers never get reviews, regardless of this setting' : undefined}
-                        onChange={e => handleUpdate(p.email, { worker_type: e.target.value })}
-                        className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal disabled:opacity-50 disabled:bg-gray-100">
-                        {WORKER_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-                      </select>
+                    <td className="px-3 py-1.5 border-b border-gray-100 text-gray-700">
+                      {p.is_contingent
+                        ? <span className="text-gray-400">—</span>
+                        : (WORKER_TYPE_LABEL[p.worker_type] || <span className="text-amber-800">Not set in directory</span>)}
                     </td>
                     <td className="px-3 py-1.5 border-b border-gray-100">
                       <label className="sr-only" htmlFor={`h-${p.email}`}>Hours for {p.display_name || p.email}</label>
@@ -180,7 +188,6 @@ function AddParticipantForm({ onAdd }) {
   const [picked, setPicked] = useState(null)
   const [suggestions, setSuggestions] = useState([])
   const [hours, setHours] = useState('full_time')
-  const [workerType, setWorkerType] = useState('paid')
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
   const [warning, setWarning] = useState('')
@@ -202,7 +209,7 @@ function AddParticipantForm({ onAdd }) {
     setWarning('')
     setAdding(true)
     try {
-      const warn = await onAdd(query, hours, workerType)
+      const warn = await onAdd(query, hours)
       setQuery('')
       setPicked(null)
       setSuggestions([])
@@ -237,13 +244,6 @@ function AddParticipantForm({ onAdd }) {
             </ul>
           )}
         </div>
-        <label className="flex-1 min-w-[130px] flex flex-col gap-1 text-sm font-semibold">
-          Worker type
-          <select value={workerType} onChange={e => setWorkerType(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 min-h-[44px] bg-white font-normal">
-            {WORKER_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
-          </select>
-        </label>
         <label className="flex-1 min-w-[130px] flex flex-col gap-1 text-sm font-semibold">
           Hours
           <select value={hours} onChange={e => setHours(e.target.value)}

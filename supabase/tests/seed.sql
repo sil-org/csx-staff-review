@@ -1,11 +1,13 @@
 -- people: dave (top) > kate, eve ; kate > bob ; bob > carol ; hr is a separate admin under dave
-insert into profiles (display_name, primary_email, manager_email) values
-  ('Dave',  'dave@sil.org',  null),
-  ('Kate',  'kate@sil.org',  'dave@sil.org'),
-  ('Eve',   'eve@sil.org',   'dave@sil.org'),
-  ('Bob',   'bob@sil.org',   'kate@sil.org'),
-  ('Carol', 'carol@sil.org', 'bob@sil.org'),
-  ('HR',    'hr@sil.org',    'dave@sil.org');
+-- employee_type drives worker_type (rev_worker_type()): 'employee' -> paid, matching the old
+-- rev_participants.worker_type default, for everyone who is a participant below.
+insert into profiles (display_name, primary_email, manager_email, employee_type) values
+  ('Dave',  'dave@sil.org',  null,            null),
+  ('Kate',  'kate@sil.org',  'dave@sil.org',  null),
+  ('Eve',   'eve@sil.org',   'dave@sil.org',  'employee'),
+  ('Bob',   'bob@sil.org',   'kate@sil.org',  'employee'),
+  ('Carol', 'carol@sil.org', 'bob@sil.org',   'employee'),
+  ('HR',    'hr@sil.org',    'dave@sil.org',  null);
 
 insert into linked_accounts (supabase_user_id, profile_id, email)
 select ('00000000-0000-0000-0000-00000000000' || n)::uuid, p.id, p.primary_email

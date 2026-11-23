@@ -18,7 +18,6 @@ const QUARTER_COLS = [
 const STAFF_TYPES = [['paid', 'Paid', Briefcase], ['seconded', 'Supported', Handshake], ['volunteer', 'Volunteer', Heart]]
 const HOURS_TYPES = [['full_time', 'Full-time'], ['part_time', 'Part-time']]
 const FTE_CYCLE = ['full_time', 'part_time']
-const STAFF_CYCLE = ['paid', 'seconded', 'volunteer']
 const STATUS_RANK = { na: 0, future: 1, draft: 2, with_manager: 3, awaiting_employee: 4, locked: 5 }
 
 export default function Team() {
@@ -128,30 +127,19 @@ export default function Team() {
     }
   }
 
-  // Admins only -- rev_participants writes are admin-only (RLS), same as the Questions &
-  // cycles page's Participants section. addParticipant() upserts, so it both adds someone
-  // who isn't a participant yet and edits an existing one's hours/worker_type in one call.
-  async function setParticipantField(person, field, value) {
-    const hours = field === 'hours' ? value : (person.hours || 'full_time')
-    const workerType = field === 'worker_type' ? value : (person.worker_type || 'paid')
-    setRoster(prev => prev.map(p => (p.employee_email === person.employee_email
-      ? { ...p, hours, worker_type: workerType, is_participant: true } : p)))
-    try {
-      await addParticipant(person.employee_email, { hours, workerType }, profile.primary_email)
-    } catch (e) {
-      setError(e.message)
-      load()
-    }
-  }
-
+  // Admins only -- rev_participants writes are admin-only (RLS), same as the Participants
+  // page. addParticipant() upserts, so it both adds someone who isn't a participant yet and
+  // edits an existing one's hours in one call. Worker type isn't editable here or anywhere
+  // in the app: it's derived from the directory's employee_type (rev_worker_type()).
   function cycleHours(person) {
     const idx = person.hours ? FTE_CYCLE.indexOf(person.hours) : -1
-    setParticipantField(person, 'hours', FTE_CYCLE[(idx + 1) % FTE_CYCLE.length])
-  }
-
-  function cycleType(person) {
-    const idx = person.worker_type ? STAFF_CYCLE.indexOf(person.worker_type) : -1
-    setParticipantField(person, 'worker_type', STAFF_CYCLE[(idx + 1) % STAFF_CYCLE.length])
+    const hours = FTE_CYCLE[(idx + 1) % FTE_CYCLE.length]
+    setRoster(prev => prev.map(p => (p.employee_email === person.employee_email
+      ? { ...p, hours, is_participant: true } : p)))
+    addParticipant(person.employee_email, { hours }, profile.primary_email).catch(e => {
+      setError(e.message)
+      load()
+    })
   }
 
   return (
@@ -237,7 +225,7 @@ export default function Team() {
                           <FteIcon hours={person.hours} onClick={rev.admin && person.employee_type !== 'contingent' ? () => cycleHours(person) : null} />
                         </td>
                         <td className="px-3 py-2 border-b border-gray-100 text-center">
-                          <StaffTypeIcon workerType={person.worker_type} onClick={rev.admin && person.employee_type !== 'contingent' ? () => cycleType(person) : null} />
+                          <StaffTypeIcon workerType={person.worker_type} />
                         </td>
                         <td className="px-3 py-2 border-b border-gray-100 text-center"><GoalsCell person={person} name={name} /></td>
                         {QUARTER_COLS.map(col => {
@@ -361,26 +349,15 @@ function FteIcon({ hours, onClick }) {
   return <span title={label} aria-label={label} className={iconCellClasses()}>{icon}</span>
 }
 
-function StaffTypeIcon({ workerType, onClick }) {
+function StaffTypeIcon({ workerType }) {
   const entry = STAFF_TYPES.find(([k]) => k === workerType)
-  const label = entry ? entry[1] : 'Staff type not set'
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} title={`${label} — click to change`} aria-label={`${label} — click to change`}
-        className={iconCellClasses() + ' hover:bg-gray-100'}>
-        {entry ? <StaffTypeGlyph Icon={entry[2]} /> : <MinusCircle size={14} className="text-gray-300" />}
-      </button>
-    )
-  }
+  const label = entry ? entry[1] : "Staff type not set in the directory's employee type"
+  const Icon = entry ? entry[2] : MinusCircle
   return (
     <span title={label} aria-label={label} className={iconCellClasses()}>
-      {entry ? <StaffTypeGlyph Icon={entry[2]} /> : <MinusCircle size={14} className="text-gray-300" />}
+      <Icon size={16} className={entry ? 'text-gray-600' : 'text-gray-300'} />
     </span>
   )
-}
-
-function StaffTypeGlyph({ Icon }) {
-  return <Icon size={16} className="text-gray-600" />
 }
 
 function GoalsCell({ person, name }) {

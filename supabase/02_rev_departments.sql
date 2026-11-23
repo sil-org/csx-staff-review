@@ -249,7 +249,7 @@ begin
   insert into rev_reviews as rv (employee_email, manager_email, kind, period_year, period_quarter,
                                  template_id, questions, employee_hours, worker_type)
   select pt.email, lower(nullif(trim(pr.manager_email), '')), p_kind, p_year, p_quarter,
-         v_template.id, qs.questions, pt.hours, pt.worker_type
+         v_template.id, qs.questions, pt.hours, rev_worker_type(pr.employee_type)
   from rev_participants pt
   join rev_required_reviews rr on rr.hours = pt.hours and rr.review = v_key and rr.required
   left join profiles pr on lower(pr.primary_email) = pt.email
@@ -259,7 +259,7 @@ begin
              'help_text', q.help_text, 'type', q.type, 'options', q.options,
              'required', q.required) order by q.position) as questions
     from rev_questions q
-    where q.template_id = v_template.id and pt.worker_type = any (q.worker_types)
+    where q.template_id = v_template.id and rev_worker_type(pr.employee_type) = any (q.worker_types)
   ) qs
   -- Contingent workers never get reviews, however they're set up as a participant.
   where pt.active and qs.questions is not null

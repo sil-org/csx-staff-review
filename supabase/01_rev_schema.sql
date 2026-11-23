@@ -10,7 +10,9 @@
 -- DEPENDS ON (already in the shared project, from License Manager):
 --   profiles(primary_email, manager_email, display_name, employee_type)   -- manager_email is the
 --     hierarchy; employee_type = 'contingent' is excluded from reviews everywhere one is created
---     or previewed (rev_create_reviews, rev_cycle_preview, rev_launch_preview)
+--     or previewed (rev_create_reviews, rev_cycle_preview, rev_launch_preview); employee_type also
+--     drives worker type (which questions someone is asked) via rev_worker_type() -- never stored
+--     or hand-edited, always derived live
 --   current_profile_id(), current_profile_email(), require_profile_email()
 --   get_report_emails()   -- direct + indirect reports of the caller
 --
@@ -47,20 +49,34 @@ insert into rev_settings (id) values (1) on conflict do nothing;
 create table if not exists rev_participants (
   email       text primary key check (email = lower(email)),
   active      boolean not null default true,
-  -- How the person works. Hours decide WHICH reviews are required (rev_required_reviews);
-  -- worker type decides WHICH questions they are asked (rev_questions.worker_types).
+  -- Hours decide WHICH reviews are required (rev_required_reviews). Worker type (which
+  -- questions they're asked, rev_questions.worker_types) is NOT stored here -- it's derived
+  -- live from profiles.employee_type by rev_worker_type() below, never set by hand.
   hours       text not null default 'full_time' check (hours in ('full_time', 'part_time')),
-  worker_type text not null default 'paid' check (worker_type in ('paid', 'seconded', 'volunteer')),
   added_by    text not null,
   added_at    timestamptz not null default now()
 );
 -- Bring a database that ran an earlier draft up to date.
 alter table rev_participants add column if not exists hours text not null default 'full_time';
-alter table rev_participants add column if not exists worker_type text not null default 'paid';
 alter table rev_participants drop constraint if exists rev_participants_hours_check;
 alter table rev_participants add constraint rev_participants_hours_check check (hours in ('full_time', 'part_time'));
 alter table rev_participants drop constraint if exists rev_participants_worker_type_check;
-alter table rev_participants add constraint rev_participants_worker_type_check check (worker_type in ('paid', 'seconded', 'volunteer'));
+alter table rev_participants drop column if exists worker_type;
+
+-- Worker type is derived from the directory's employee_type, never set by hand:
+-- employee -> paid, member -> seconded ("Supported" in the UI), volunteer -> volunteer.
+-- Anything else (including contingent, which never gets a review at all -- see
+-- rev_create_reviews) maps to null, so an unrecognized/missing employee_type matches
+-- no question rather than guessing one.
+create or replace function rev_worker_type(p_employee_type text)
+returns text language sql immutable as $$
+  select case p_employee_type
+    when 'employee'  then 'paid'
+    when 'member'    then 'seconded'
+    when 'volunteer' then 'volunteer'
+    else null
+  end
+$$;
 
 -- Which reviews each kind of worker must have. One row per (hours, review); the admin flips `required`.
 -- review is q1..q4 for the quarterly reviews, or annual. (Q4 is also switched off org-wide while
@@ -640,10 +656,12 @@ begin
   end if;
 
   -- A person whose worker type matches no question gets no review rather than an empty one.
+  -- Superseded by 02_rev_departments.sql's rev_create_reviews-backed version; kept in sync
+  -- (worker type from profiles, contingent workers excluded) in case 01 is ever run alone.
   insert into rev_reviews (employee_email, manager_email, kind, period_year, period_quarter,
                            template_id, questions, employee_hours, worker_type)
   select pt.email, lower(nullif(trim(pr.manager_email), '')), p_kind, p_year, p_quarter,
-         v_template.id, qs.questions, pt.hours, pt.worker_type
+         v_template.id, qs.questions, pt.hours, rev_worker_type(pr.employee_type)
   from rev_participants pt
   join rev_required_reviews rr on rr.hours = pt.hours and rr.review = v_key and rr.required
   left join profiles pr on lower(pr.primary_email) = pt.email
@@ -653,9 +671,9 @@ begin
              'help_text', q.help_text, 'type', q.type, 'options', q.options,
              'required', q.required) order by q.position) as questions
     from rev_questions q
-    where q.template_id = v_template.id and pt.worker_type = any (q.worker_types)
+    where q.template_id = v_template.id and rev_worker_type(pr.employee_type) = any (q.worker_types)
   ) qs
-  where pt.active and qs.questions is not null
+  where pt.active and qs.questions is not null and pr.employee_type is distinct from 'contingent'
   on conflict do nothing;
 
   get diagnostics v_count = row_count;
@@ -838,7 +856,7 @@ returns table (employee_email text, display_name text, manager_email text, is_di
 language sql stable security definer set search_path = public as $$
   select lower(pr.primary_email), pr.display_name, lower(nullif(trim(pr.manager_email), '')),
          lower(nullif(trim(pr.manager_email), '')) = rev_me(),
-         coalesce(rp.active, false), rp.hours, rp.worker_type, pr.employee_type
+         coalesce(rp.active, false), rp.hours, rev_worker_type(pr.employee_type), pr.employee_type
   from profiles pr
   left join rev_participants rp on rp.email = lower(pr.primary_email)
   where current_profile_email() is not null
@@ -884,7 +902,7 @@ revoke execute on function
   rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_cycle_history(), rev_review_key(text, int),
   rev_send_for_signoff(uuid), rev_sign_review(uuid, boolean, text), rev_compute_hash(uuid),
   rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(), rev_team_roster(),
-  rev_request_nudge(text)
+  rev_request_nudge(text), rev_worker_type(text)
 from public, anon;
 
 revoke execute on function rev_compute_hash(uuid) from authenticated;
@@ -896,5 +914,5 @@ grant execute on function
   rev_open_cycle(text, int, int), rev_submit_review(uuid), rev_cancel_goal(uuid, text), rev_cycle_preview(text, int, int), rev_cycle_history(), rev_review_key(text, int),
   rev_send_for_signoff(uuid), rev_sign_review(uuid, boolean, text),
   rev_verify_review(uuid), rev_reassign_manager(uuid, text), rev_team_status(), rev_team_roster(),
-  rev_request_nudge(text)
+  rev_request_nudge(text), rev_worker_type(text)
 to authenticated;

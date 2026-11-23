@@ -18,7 +18,7 @@ alter table rev_answers enable trigger rev_block_locked;
 alter table rev_comments enable trigger rev_block_locked;
 alter table rev_signoffs enable trigger rev_block_locked;
 delete from rev_launches; delete from rev_reminder_log;
-update rev_participants set hours = 'full_time', worker_type = 'paid', active = true;
+update rev_participants set hours = 'full_time', active = true;
 delete from rev_questions where worker_types <> array['paid','seconded','volunteer'];
 insert into rev_super_admins (email, added_by) values ('hr@sil.org', 'bootstrap') on conflict do nothing;
 -- IT (head dave) > Customer Service (head kate), Operational IT (head eve)

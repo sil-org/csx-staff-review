@@ -14,7 +14,10 @@ and how to run it; read it first.
 ## Rules to preserve
 - Submitting a review is final: no send-back. Locked reviews are immutable (triggers).
 - Goals are cancelled, never deleted; a reason is optional. Fiscal year starts October 1 (FY2027 = Oct 2026 - Sep 2027).
-- Hours (full/part-time) decide required reviews; worker type (paid/seconded/volunteer) decides which questions apply.
+- Hours (full/part-time, set on `rev_participants`, decides required reviews) vs. worker type (paid/seconded/volunteer, decides which
+  questions apply): worker type is NEVER stored or hand-edited — `rev_worker_type()` derives it live from `profiles.employee_type`
+  (`employee`->paid, `member`->seconded ("Supported" in the UI), `volunteer`->volunteer; anything else, including null, -> no
+  questions match rather than guessing one).
 - Departments are a tree with one head. Heads launch for their department and below; a review can only be launched once per person.
   Heads read COMPLETED reviews only for people directly in their department; higher heads see status only.
 - Contingent workers (`profiles.employee_type = 'contingent'`) never get reviews, even if they're an active participant —

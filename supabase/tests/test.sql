@@ -318,9 +318,12 @@ begin
 end $$;
 
 -- ── I. hours decide which reviews, worker type decides which questions ──────
+-- Worker type is derived from profiles.employee_type (rev_worker_type()), not set on
+-- rev_participants: 'volunteer' -> volunteer, 'member' -> seconded ("Supported" in the UI).
 reset role;
-update rev_participants set hours = 'part_time', worker_type = 'volunteer' where email = 'eve@sil.org';
-update rev_participants set worker_type = 'seconded' where email = 'carol@sil.org';
+update rev_participants set hours = 'part_time' where email = 'eve@sil.org';
+update profiles set employee_type = 'volunteer' where primary_email = 'eve@sil.org';
+update profiles set employee_type = 'member' where primary_email = 'carol@sil.org';
 -- a question only paid staff are asked, on the annual template
 insert into rev_questions (template_id, position, prompt, type, required, worker_types)
 select id, 2, 'Salary-related development plan', 'paragraph', false, array['paid'] from rev_templates where kind = 'annual';
@@ -358,9 +361,7 @@ begin
   update rev_settings set skip_q4_review = true where id = 1;
 
   -- validation
-  begin update rev_participants set worker_type = 'contractor' where email = 'eve@sil.org'; exception when others then e := sqlerrm; end;
-  assert e is not null, 'bad worker type rejected';
-  e := null;
+  assert rev_worker_type('contractor') is null, 'unrecognized employee_type maps to no worker type, not an error';
   begin insert into rev_questions (template_id, position, prompt, type, worker_types) select id, 9, 'x', 'paragraph', array[]::text[] from rev_templates limit 1; exception when others then e := sqlerrm; end;
   assert e is not null, 'empty audience rejected';
   raise notice 'I1 ok: required reviews follow hours; questions follow worker type';
@@ -380,8 +381,8 @@ end $$;
 reset role;
 insert into profiles (display_name, primary_email, manager_email, employee_type) values
   ('Frank', 'frank@sil.org', 'kate@sil.org', 'contingent');
-insert into rev_participants (email, added_by, hours, worker_type) values
-  ('frank@sil.org', 'hr@sil.org', 'full_time', 'paid');
+insert into rev_participants (email, added_by, hours) values
+  ('frank@sil.org', 'hr@sil.org', 'full_time');
 
 set role authenticated;
 set request.jwt.claim.sub = :'hr';
