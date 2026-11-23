@@ -17,9 +17,11 @@ and how to run it; read it first.
 - Hours (full/part-time) decide required reviews; worker type (paid/seconded/volunteer) decides which questions apply.
 - Departments are a tree with one head. Heads launch for their department and below; a review can only be launched once per person.
   Heads read COMPLETED reviews only for people directly in their department; higher heads see status only.
+- Contingent workers (`profiles.employee_type = 'contingent'`) never get reviews, even if they're an active participant —
+  excluded in `rev_cycle_preview`, `rev_create_reviews` (shared by `rev_open_cycle`/`rev_launch_cycle`), and `rev_launch_preview`.
 
 ## Open
-- Where the department structure comes from (profiles has only `manager_email`); import plan.
+- Where the department structure comes from (profiles has `manager_email` and `employee_type`, no department field); import plan.
 - Edge function to send launch emails (queue: `rev_reminder_log`, kind `launch`; sanitize HTML there).
 - Port the screens from `design/` into the stub pages.
 - Real sign-in needs the shared Supabase `.env` (1Password "license manager" vault).

@@ -37,6 +37,7 @@ export default function AdminParticipants() {
             display_name: prof?.display_name || null,
             manager_email: managerEmail,
             manager_name: managerProf?.display_name || null,
+            is_contingent: prof?.employee_type === 'contingent',
           }
         }))
       })
@@ -52,6 +53,9 @@ export default function AdminParticipants() {
     const matched = await findProfile(clean).catch(() => null)
     await addParticipant(clean, { hours, workerType }, profile.primary_email)
     load()
+    if (matched?.employee_type === 'contingent') {
+      return `Added ${clean}. They're a contingent worker, so they'll never be sent a review, no matter the hours/worker type set here.`
+    }
     if (matched && matched.manager_email) return null
     return `Added ${clean}. ${matched ? 'No manager is on file for them yet' : "They aren't in the directory yet"} — they won't be able to submit a review until that's set.`
   }
@@ -126,6 +130,11 @@ export default function AdminParticipants() {
                   <tr key={p.email}>
                     <th scope="row" className="px-3 py-1.5 text-left font-semibold border-b border-gray-100">
                       {p.display_name || p.email}
+                      {p.is_contingent && (
+                        <span className="ml-2 bg-gray-200 text-gray-700 text-[11px] font-semibold rounded-full px-2 py-0.5 align-middle whitespace-nowrap">
+                          Contingent — no reviews
+                        </span>
+                      )}
                       {p.display_name && <div className="text-xs font-normal text-gray-500">{p.email}</div>}
                     </th>
                     <td className="px-3 py-1.5 border-b border-gray-100 text-gray-700">
@@ -133,15 +142,19 @@ export default function AdminParticipants() {
                     </td>
                     <td className="px-3 py-1.5 border-b border-gray-100">
                       <label className="sr-only" htmlFor={`w-${p.email}`}>Worker type for {p.display_name || p.email}</label>
-                      <select id={`w-${p.email}`} value={p.worker_type} onChange={e => handleUpdate(p.email, { worker_type: e.target.value })}
-                        className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal">
+                      <select id={`w-${p.email}`} value={p.worker_type} disabled={p.is_contingent}
+                        title={p.is_contingent ? 'Contingent workers never get reviews, regardless of this setting' : undefined}
+                        onChange={e => handleUpdate(p.email, { worker_type: e.target.value })}
+                        className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal disabled:opacity-50 disabled:bg-gray-100">
                         {WORKER_TYPES.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
                       </select>
                     </td>
                     <td className="px-3 py-1.5 border-b border-gray-100">
                       <label className="sr-only" htmlFor={`h-${p.email}`}>Hours for {p.display_name || p.email}</label>
-                      <select id={`h-${p.email}`} value={p.hours} onChange={e => handleUpdate(p.email, { hours: e.target.value })}
-                        className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal">
+                      <select id={`h-${p.email}`} value={p.hours} disabled={p.is_contingent}
+                        title={p.is_contingent ? 'Contingent workers never get reviews, regardless of this setting' : undefined}
+                        onChange={e => handleUpdate(p.email, { hours: e.target.value })}
+                        className="border border-gray-400 rounded-lg px-3 py-1.5 min-h-[44px] bg-white font-normal disabled:opacity-50 disabled:bg-gray-100">
                         {HOURS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
                       </select>
                     </td>

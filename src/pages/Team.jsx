@@ -73,6 +73,7 @@ export default function Team() {
   }, [statusRows, reviewIds])
 
   function cellFor(person, col) {
+    if (person.employee_type === 'contingent') return { state: 'na' }
     const required_ = requiredByKey[`${person.hours}:${col.key}`]
     if (!person.hours || !required_) return { state: 'na' }
     const idx = `${person.employee_email}|${col.kind}|${fy}|${col.quarter ?? ''}`
@@ -222,17 +223,21 @@ export default function Team() {
                           {person.is_direct
                             ? <Link to={`/team/${encodeURIComponent(person.employee_email)}/goals`} state={{ displayName: name }}>{name}</Link>
                             : <span>{name}</span>}
-                          {!person.is_participant && (
+                          {person.employee_type === 'contingent' ? (
+                            <span className="ml-2 bg-gray-200 text-gray-700 text-[11px] font-semibold rounded-full px-2 py-0.5 align-middle whitespace-nowrap">
+                              Contingent — no reviews
+                            </span>
+                          ) : !person.is_participant && (
                             <span className="ml-2 bg-amber-100 text-amber-800 text-[11px] font-semibold rounded-full px-2 py-0.5 align-middle whitespace-nowrap">
                               Not in reviews yet
                             </span>
                           )}
                         </th>
                         <td className="px-3 py-2 border-b border-gray-100 text-center">
-                          <FteIcon hours={person.hours} onClick={rev.admin ? () => cycleHours(person) : null} />
+                          <FteIcon hours={person.hours} onClick={rev.admin && person.employee_type !== 'contingent' ? () => cycleHours(person) : null} />
                         </td>
                         <td className="px-3 py-2 border-b border-gray-100 text-center">
-                          <StaffTypeIcon workerType={person.worker_type} onClick={rev.admin ? () => cycleType(person) : null} />
+                          <StaffTypeIcon workerType={person.worker_type} onClick={rev.admin && person.employee_type !== 'contingent' ? () => cycleType(person) : null} />
                         </td>
                         <td className="px-3 py-2 border-b border-gray-100 text-center"><GoalsCell person={person} name={name} /></td>
                         {QUARTER_COLS.map(col => {

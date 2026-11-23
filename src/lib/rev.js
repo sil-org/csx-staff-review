@@ -110,7 +110,7 @@ export async function upsertComment(reviewId, questionKey, body, authorEmail) {
 
 export async function listProfiles(emails) {
   const { data, error } = await supabase
-    .from('profiles').select('primary_email, display_name, manager_email').in('primary_email', emails)
+    .from('profiles').select('primary_email, display_name, manager_email, employee_type').in('primary_email', emails)
   if (error) throw error
   return data
 }
@@ -266,7 +266,7 @@ export async function searchProfiles(query, limit = 8) {
   const q = query.trim().replace(/[,()]/g, '')
   if (q.length < 2) return []
   const { data, error } = await supabase
-    .from('profiles').select('primary_email, display_name, manager_email')
+    .from('profiles').select('primary_email, display_name, manager_email, employee_type')
     .or(`display_name.ilike.%${q}%,primary_email.ilike.%${q}%`)
     .limit(limit)
   if (error) throw error
@@ -275,7 +275,7 @@ export async function searchProfiles(query, limit = 8) {
 
 export async function findProfile(email) {
   const { data, error } = await supabase
-    .from('profiles').select('primary_email, display_name, manager_email')
+    .from('profiles').select('primary_email, display_name, manager_email, employee_type')
     .eq('primary_email', email.toLowerCase()).maybeSingle()
   if (error) throw error
   return data

@@ -8,7 +8,9 @@
 -- project already has profiles, linked_accounts and the helper functions below.
 --
 -- DEPENDS ON (already in the shared project, from License Manager):
---   profiles(primary_email, manager_email, display_name)   -- manager_email is the hierarchy
+--   profiles(primary_email, manager_email, display_name, employee_type)   -- manager_email is the
+--     hierarchy; employee_type = 'contingent' is excluded from reviews everywhere one is created
+--     or previewed (rev_create_reviews, rev_cycle_preview, rev_launch_preview)
 --   current_profile_id(), current_profile_email(), require_profile_email()
 --   get_report_emails()   -- direct + indirect reports of the caller
 --
@@ -578,10 +580,14 @@ begin
     count(*) filter (where not coalesce(rr.required, false))::int,
     count(*) filter (where r.id is not null)::int
   from rev_participants pt
+  left join profiles pr on lower(pr.primary_email) = pt.email
   left join rev_required_reviews rr on rr.hours = pt.hours and rr.review = v_key
   left join rev_reviews r on r.employee_email = pt.email and r.kind = p_kind
                           and r.period_year = p_year and coalesce(r.period_quarter, 0) = coalesce(p_quarter, 0)
-  where pt.active;
+  -- Contingent workers never get reviews, so they're excluded here too -- a preview
+  -- that counted them as eligible/not_required would never match what opening the
+  -- cycle actually creates (rev_create_reviews applies the same exclusion).
+  where pt.active and pr.employee_type is distinct from 'contingent';
 end;
 $$;
 
@@ -825,13 +831,14 @@ $$;
 -- yet -- it's who reports to you, not review status. Always scoped to the
 -- caller's own tree, even for admins: this is a personal roster, not an
 -- org-wide view (that's rev_department_report/_status).
+drop function if exists rev_team_roster();
 create or replace function rev_team_roster()
 returns table (employee_email text, display_name text, manager_email text, is_direct boolean,
-               is_participant boolean, hours text, worker_type text)
+               is_participant boolean, hours text, worker_type text, employee_type text)
 language sql stable security definer set search_path = public as $$
   select lower(pr.primary_email), pr.display_name, lower(nullif(trim(pr.manager_email), '')),
          lower(nullif(trim(pr.manager_email), '')) = rev_me(),
-         coalesce(rp.active, false), rp.hours, rp.worker_type
+         coalesce(rp.active, false), rp.hours, rp.worker_type, pr.employee_type
   from profiles pr
   left join rev_participants rp on rp.email = lower(pr.primary_email)
   where current_profile_email() is not null

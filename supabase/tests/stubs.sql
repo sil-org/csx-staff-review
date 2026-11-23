@@ -14,7 +14,8 @@ create table profiles (
   display_name  text not null,
   primary_email text not null,
   role          text not null default 'member',
-  manager_email text
+  manager_email text,
+  employee_type text
 );
 create table linked_accounts (
   supabase_user_id uuid primary key,

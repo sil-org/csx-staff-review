@@ -130,6 +130,27 @@ begin
   raise notice 'K4 ok: a higher head cannot launch again either';
 end $$;
 
+-- Contingent workers (see test.sql's frank@sil.org) are excluded from a department's
+-- launch preview too, even once they belong to that department.
+reset role;
+update rev_participants set department_id = (select id from dept_ids where name = 'Operational IT')
+  where email = 'frank@sil.org';
+set role authenticated;
+set request.jwt.claim.sub = :'eve';
+do $$ declare p record; ops uuid := (select id from dept_ids where name='Operational IT');
+begin
+  select * into p from rev_launch_preview(ops, 'quarterly', 2026, 2);
+  assert p.eligible = 3, 'frank (contingent) excluded from eve''s department preview: ' || p::text;
+  raise notice 'K5 ok: a department preview excludes contingent workers too';
+end $$;
+-- Department headcount (rev_department_report) counts every active participant,
+-- contingent or not -- that report is out of scope for this exclusion. Put frank
+-- back outside the tree so section M's headcount isn't thrown off by him.
+reset role;
+update rev_participants set department_id = null where email = 'frank@sil.org';
+set role authenticated;
+set request.jwt.claim.sub = :'dave';
+
 -- ── L. read-only access: only the head directly over the person ──
 do $$ begin
   assert (select count(*) from rev_reviews) = 0, 'higher head cannot read unlocked reviews';

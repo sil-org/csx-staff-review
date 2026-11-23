@@ -376,6 +376,27 @@ begin
   raise notice 'I2 ok: only admins manage the matrix';
 end $$;
 
+-- a contingent worker is a participant like anyone else, but never gets a review
+reset role;
+insert into profiles (display_name, primary_email, manager_email, employee_type) values
+  ('Frank', 'frank@sil.org', 'kate@sil.org', 'contingent');
+insert into rev_participants (email, added_by, hours, worker_type) values
+  ('frank@sil.org', 'hr@sil.org', 'full_time', 'paid');
+
+set role authenticated;
+set request.jwt.claim.sub = :'hr';
+do $$ declare n int; p record;
+begin
+  select * into p from rev_cycle_preview('quarterly', 2029, 1);
+  assert p.eligible = 2 and p.not_required = 1 and p.already_open = 0,
+    format('contingent worker excluded from preview: %s/%s/%s', p.eligible, p.not_required, p.already_open);
+  n := rev_open_cycle('quarterly', 2029, 1);
+  assert n = 2, 'opens for full-time staff only, the contingent worker is skipped, got ' || n;
+  assert not exists (select 1 from rev_reviews where employee_email = 'frank@sil.org'),
+    'contingent worker never gets a review even though they are an active participant';
+  raise notice 'I3 ok: contingent workers are excluded from review creation and previews';
+end $$;
+
 -- ── H. anon and no-profile callers ──────────────────────────────────────────
 set role anon;
 do $$ declare e text;

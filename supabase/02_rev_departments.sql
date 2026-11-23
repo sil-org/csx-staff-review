@@ -261,8 +261,10 @@ begin
     from rev_questions q
     where q.template_id = v_template.id and pt.worker_type = any (q.worker_types)
   ) qs
+  -- Contingent workers never get reviews, however they're set up as a participant.
   where pt.active and qs.questions is not null
     and (p_dept is null or pt.department_id in (select rev_dept_subtree(p_dept)))
+    and pr.employee_type is distinct from 'contingent'
   on conflict do nothing
   returning rv.employee_email;
 end;
@@ -315,10 +317,12 @@ begin
              or l.department_id in (select rev_dept_subtree(p_dept)))
     ), '[]'::jsonb)
   from rev_participants pt
+  left join profiles pr on lower(pr.primary_email) = pt.email
   left join rev_required_reviews rr on rr.hours = pt.hours and rr.review = v_key
   left join rev_reviews r on r.employee_email = pt.email and r.kind = p_kind
                           and r.period_year = p_year and coalesce(r.period_quarter, 0) = coalesce(p_quarter, 0)
-  where pt.active and (p_dept is null or pt.department_id in (select rev_dept_subtree(p_dept)));
+  where pt.active and (p_dept is null or pt.department_id in (select rev_dept_subtree(p_dept)))
+    and pr.employee_type is distinct from 'contingent';
 end;
 $$;
 
