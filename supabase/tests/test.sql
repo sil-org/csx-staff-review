@@ -362,6 +362,7 @@ begin
 
   -- validation
   assert rev_worker_type('contractor') is null, 'unrecognized employee_type maps to no worker type, not an error';
+  assert rev_worker_type(null) = 'seconded', 'no employee_type on file yet defaults to Supported';
   begin insert into rev_questions (template_id, position, prompt, type, worker_types) select id, 9, 'x', 'paragraph', array[]::text[] from rev_templates limit 1; exception when others then e := sqlerrm; end;
   assert e is not null, 'empty audience rejected';
   raise notice 'I1 ok: required reviews follow hours; questions follow worker type';

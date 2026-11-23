@@ -13,6 +13,7 @@ function workerTypeFor(employeeType) {
   if (employeeType === 'employee') return 'paid'
   if (employeeType === 'member') return 'seconded'
   if (employeeType === 'volunteer') return 'volunteer'
+  if (employeeType == null) return 'seconded' // no employee_type on file yet -- default to Supported
   return null
 }
 

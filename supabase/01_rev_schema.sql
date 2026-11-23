@@ -65,16 +65,17 @@ alter table rev_participants drop column if exists worker_type;
 
 -- Worker type is derived from the directory's employee_type, never set by hand:
 -- employee -> paid, member -> seconded ("Supported" in the UI), volunteer -> volunteer.
--- Anything else (including contingent, which never gets a review at all -- see
--- rev_create_reviews) maps to null, so an unrecognized/missing employee_type matches
--- no question rather than guessing one.
+-- No employee_type on file yet (null) also -> seconded/"Supported", the safest default
+-- until the directory catches up. Any OTHER unrecognized value (including contingent,
+-- which never gets a review at all -- see rev_create_reviews) maps to null, so it
+-- matches no question rather than guessing one.
 create or replace function rev_worker_type(p_employee_type text)
 returns text language sql immutable as $$
   select case p_employee_type
     when 'employee'  then 'paid'
     when 'member'    then 'seconded'
     when 'volunteer' then 'volunteer'
-    else null
+    else case when p_employee_type is null then 'seconded' else null end
   end
 $$;
 
